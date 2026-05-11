@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Leigh | Portfolio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #39ff6a;
+    --dim: #a0a0a0;
+    --bg: #0d0d0d;
+    --card: #111111;
+    --border: #1e1e1e;
+    --text: #e0e0e0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  header {
+    padding: 3rem 2rem 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prompt {
+    color: var(--green);
+    font-size: 13px;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: normal;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span {
+    color: var(--green);
+  }
+
+  .tagline {
+    color: var(--dim);
+    font-size: 13px;
+    margin-top: 0.5rem;
+  }
+
+  nav {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--green); }
+
+  section {
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .about-text {
+    color: var(--dim);
+    max-width: 560px;
+    font-size: 14px;
+  }
+
+  .about-text p + p { margin-top: 0.75rem; }
+
+  .cert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .cert-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 13px;
+    color: var(--dim);
+  }
+
+  .cert-item::before {
+    content: '✓ ';
+    color: var(--green);
+  }
+
+  .project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+  }
+
+  .project-title {
+    color: #ffffff;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .project-desc {
+    color: var(--dim);
+    font-size: 13px;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .tag {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .stack-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stack-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 2px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contact-links a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+
+  .contact-links a:hover { color: var(--green); }
+
+  .contact-links span {
+    color: var(--green);
+    margin-right: 8px;
+  }
+
+  footer {
+    padding: 1.5rem 2rem;
+    color: #3a3a3a;
+    font-size: 12px;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--green);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="prompt">~/portfolio $</div>
+  <h1>John Leigh Samson<span class="cursor"></span></h1>
+  <p class="tagline">BSIT student · Network & Cybersecurity · Batangas, PH</p>
+  <nav>
+    <a href="#about">about</a>
+    <a href="#certs">certs</a>
+    <a href="#projects">projects</a>
+    <a href="#stack">tools</a>
+    <a href="#contact">contact</a>
+  </nav>
+</header>
+
+<section id="about">
+  <div class="section-label">// about</div>
+  <div class="about-text">
+    <p>I'm a cybersecurity student quietly working my way through the blue team side of things — log analysis, incident response, and security monitoring.</p>
+    <p>Still learning. Hands-on when possible. I prefer understanding things deeply over moving fast.</p>
+    <p>Long-term goal: remote SOC analyst work. Currently building skills through TryHackMe, real-world incident study, and personal lab setups.</p>
+  </div>
+</section>
+
+<section id="certs">
+  <div class="section-label">// certifications</div>
+  <div class="cert-grid">
+    <div class="cert-item">Google Cybersecurity Professional</div>
+    <div class="cert-item">Fortinet Certified Associate</div>
+    <div class="cert-item">Security Blue Team — Junior SOC Analyst</div>
+    <div class="cert-item">Cisco Cyber Defense Analyst</div>
+    <div class="cert-item">IBM — GRC & Data Privacy</div>
+    <div class="cert-item">IBM — Vulnerability Management</div>
+    <div class="cert-item">TryHackMe Pre-Security Path</div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="section-label">// projects</div>
+  <div class="project-list">
+
+    <div class="project-card">
+      <div class="project-title">Mobile Forensics Analysis</div>
+      <div class="project-desc">Ran MVT (Mobile Verification Toolkit) on an iPhone 11 and Samsung Galaxy A50. Triaged IOCs, separated false positives from telecom telemetry, documented findings.</div>
+      <div class="project-tags">
+        <span class="tag">MVT</span>
+        <span class="tag">MITRE ATT&CK</span>
+        <span class="tag">T1426</span>
+        <span class="tag">T1512</span>
+        <span class="tag">iOS · Android</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-title">Passive Wi-Fi Reconnaissance</div>
+      <div class="project-desc">Performed passive recon on own WPA3-SAE network. Zero client exposure, no handshake captured. Documented defensive posture and applicable mitigations.</div>
+      <div class="project-tags">
+        <span class="tag">Wireshark</span>
+        <span class="tag">T1040</span>
+        <span class="tag">T1046</span>
+        <span class="tag">WPA3-SAE</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-title">Parrot OS Hardening Lab</div>
+      <div class="project-desc">Personal workstation hardened with full disk encryption, GRUB password, UFW firewall, Wazuh SIEM, Mullvad WireGuard VPN, and DNS over HTTPS. Documented as a reference cheatsheet.</div>
+      <div class="project-tags">
+        <span class="tag">Parrot OS</span>
+        <span class="tag">Wazuh</span>
+        <span class="tag">UFW</span>
+        <span class="tag">WireGuard</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="stack">
+  <div class="section-label">// tools & stack</div>
+  <div class="stack-list">
+    <span class="stack-pill">Parrot OS</span>
+    <span class="stack-pill">Wazuh</span>
+    <span class="stack-pill">Wireshark</span>
+    <span class="stack-pill">TryHackMe</span>
+    <span class="stack-pill">Mullvad VPN</span>
+    <span class="stack-pill">Linux CLI</span>
+    <span class="stack-pill">SQL</span>
+    <span class="stack-pill">Python (basics)</span>
+    <span class="stack-pill">MITRE ATT&CK</span>
+    <span class="stack-pill">NIST CSF</span>
+    <span class="stack-pill">MVT</span>
+    <span class="stack-pill">Proton Mail</span>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="section-label">// contact</div>
+  <div class="contact-links">
+    <a href="https://linkedin.com/in/your-link" target="_blank"><span>→</span> LinkedIn</a>
+    <a href="https://upwork.com/your-link" target="_blank"><span>→</span> Upwork</a>
+    <a href="mailto:your@email.com"><span>→</span> Email</a>
+  </div>
+</section>
+
+<footer>
+  built with github pages · always learning
+</footer>
+
+</body>
+</html>
