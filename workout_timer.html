@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --border: #2a2a2a;
+  --accent: #c8f135;
+  --accent2: #ff6b35;
+  --accent3: #35c8f1;
+  --text: #f0f0f0;
+  --muted: #666;
+  --danger: #ff4444;
+  --rest-color: #35c8f1;
+  --work-color: #c8f135;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+body{display:flex;flex-direction:column;min-height:100vh}
+
+/* NOISE TEXTURE OVERLAY */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.6}
+
+.app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;padding:0 1rem}
+
+/* HEADER */
+header{display:flex;justify-content:space-between;align-items:center;padding:1.2rem 0 0.8rem}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent)}
+.mode-toggle{display:flex;gap:6px}
+.mode-btn{padding:4px 12px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;letter-spacing:1px;text-transform:uppercase}
+.mode-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:500}
+
+/* MAIN TIMER DISPLAY */
+.timer-section{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem 0}
+
+.phase-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:0.8rem;transition:color 0.3s}
+.phase-label.work{color:var(--work-color)}
+.phase-label.rest{color:var(--rest-color)}
+
+/* CIRCULAR PROGRESS */
+.ring-container{position:relative;width:240px;height:240px;margin-bottom:1.5rem}
+.ring-bg{position:absolute;inset:0}
+svg.ring{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-track{fill:none;stroke:var(--surface2);stroke-width:8}
+.ring-progress{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 0.5s linear, stroke 0.3s;stroke-dasharray:691;stroke-dashoffset:0}
+.ring-progress.rest{stroke:var(--rest-color)}
+
+.timer-display{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.time-big{font-family:'Bebas Neue',sans-serif;font-size:80px;line-height:1;letter-spacing:2px;color:var(--text);transition:color 0.3s}
+.time-big.warning{color:var(--danger);animation:pulse 0.5s infinite alternate}
+.round-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+
+@keyframes pulse{from{opacity:1}to{opacity:0.5}}
+
+/* EXERCISE NAME */
+.exercise-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--text);text-align:center;margin-bottom:0.4rem;min-height:38px;transition:all 0.3s}
+.next-label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;margin-bottom:1.5rem;min-height:16px}
+
+/* CONTROLS */
+.controls{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:1.5rem}
+.btn{border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.btn:active{transform:scale(0.94)}
+.btn-main{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#000;font-size:22px}
+.btn-main:hover{background:#d4ff45}
+.btn-main.danger{background:var(--danger);color:#fff}
+.btn-sec{width:44px;height:44px;border-radius:50%;background:var(--surface2);color:var(--text);font-size:16px;border:1px solid var(--border)}
+.btn-sec:hover{background:var(--surface);border-color:var(--muted)}
+.btn-skip{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:8px 16px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.btn-skip:hover{border-color:var(--text);color:var(--text)}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.2rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);letter-spacing:1px}
+.stat-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;font-family:'DM Mono',monospace}
+
+/* EXERCISE QUEUE */
+.queue-section{margin-bottom:1rem}
+.queue-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px}
+.queue{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.queue::-webkit-scrollbar{width:2px}
+.queue::-webkit-scrollbar-track{background:transparent}
+.queue::-webkit-scrollbar-thumb{background:var(--border)}
+.queue-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;transition:all 0.3s}
+.queue-item.current{border-color:var(--accent);background:#1a1f0a;color:var(--accent)}
+.queue-item.done{opacity:0.3;text-decoration:line-through}
+.queue-item .ex-sets{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.queue-item.current .ex-sets{color:var(--accent)}
+
+/* SETTINGS PANEL */
+.settings-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1rem;display:none}
+.settings-panel.open{display:block}
+.settings-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:1rem;color:var(--accent)}
+.setting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.setting-label{font-size:13px;color:var(--text)}
+.setting-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.stepper{display:flex;align-items:center;gap:8px}
+.step-btn{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.step-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.step-val{font-family:'Bebas Neue',sans-serif;font-size:20px;min-width:40px;text-align:center;color:var(--accent)}
+.toggle-row{display:flex;align-items:center;gap:8px}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:20px;transition:0.2s}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:0.2s}
+.toggle input:checked+.toggle-slider{background:var(--accent);border-color:var(--accent)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px);background:#000}
+
+/* COMPLETED OVERLAY */
+.completed{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.completed.show{display:flex}
+.complete-icon{font-size:60px;margin-bottom:1rem}
+.complete-title{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:4px;color:var(--accent);margin-bottom:0.5rem}
+.complete-stats{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:2rem;line-height:2}
+.btn-restart{padding:14px 36px;background:var(--accent);color:#000;border:none;border-radius:30px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;justify-content:space-around;padding:0.8rem 0 1.2rem;border-top:1px solid var(--border)}
+.nav-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);padding:4px 12px;border-radius:8px;transition:all 0.2s}
+.nav-btn span:first-child{font-size:18px}
+.nav-btn.active{color:var(--accent)}
+.nav-btn:hover{color:var(--text)}
+
+/* EXERCISE EDITOR */
+.editor-panel{display:none;flex-direction:column;gap:8px;margin-bottom:1rem}
+.editor-panel.open{display:flex}
+.editor-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent);margin-bottom:4px}
+.editor-hint{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;margin-bottom:8px}
+.ex-edit-item{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+.ex-edit-item.dragging{opacity:0.4;border-color:var(--accent)}
+.drag-handle{color:var(--muted);font-size:14px;cursor:grab;padding:0 2px;user-select:none}
+.ex-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;min-width:0}
+.ex-input::placeholder{color:var(--muted)}
+.ex-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;transition:color 0.2s;line-height:1}
+.ex-del:hover{color:var(--danger)}
+.ex-up,.ex-down{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 3px;transition:color 0.2s}
+.ex-up:hover,.ex-down:hover{color:var(--accent)}
+.btn-add-ex{display:flex;align-items:center;gap:8px;padding:9px 14px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;width:100%}
+.btn-add-ex:hover{border-color:var(--accent);color:var(--accent)}
+.btn-apply{padding:10px;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;width:100%;margin-top:4px}
+.btn-apply:hover{background:#d4ff45}
+
+/* RESPONSIVE */
+@media(max-width:380px){
+  .time-big{font-size:64px}
+  .ring-container{width:200px;height:200px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">GRIND</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" onclick="setMode('interval')">Interval</button>
+      <button class="mode-btn" onclick="setMode('stopwatch')">Stopwatch</button>
+      <button class="mode-btn" onclick="setMode('countdown')">Countdown</button>
+    </div>
+  </header>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-title">Settings</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Work Time</div><div class="setting-sub">seconds per set</div></div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('work',-5)">−</button>
+        <div class="step-val" id="workVal">40</div>
+        <button class="step-btn" onclick="adjust('work',5)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Rest Time</div><div class="setting-sub">seconds between sets</div></div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('rest',-5)">−</button>
+        <div class="step-val" id="restVal">20</div>
+        <button class="step-btn" onclick="adjust('rest',5)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Sets per Exercise</div></div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('sets',-1)">−</button>
+        <div class="step-val" id="setsVal">3</div>
+        <button class="step-btn" onclick="adjust('sets',1)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Rest Between Exercises</div><div class="setting-sub">seconds</div></div>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('exrest',-5)">−</button>
+        <div class="step-val" id="exrestVal">60</div>
+        <button class="step-btn" onclick="adjust('exrest',5)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Sound Alerts</div></div>
+      <label class="toggle"><input type="checkbox" id="soundToggle" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Countdown Beeps</div></div>
+      <label class="toggle"><input type="checkbox" id="beepToggle" checked><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- TIMER SECTION -->
+  <div class="timer-section">
+    <div class="phase-label" id="phaseLabel">READY</div>
+    <div class="ring-container">
+      <div class="ring-bg">
+        <svg class="ring" viewBox="0 0 240 240">
+          <circle class="ring-track" cx="120" cy="120" r="110"/>
+          <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="110"/>
+        </svg>
+      </div>
+      <div class="timer-display">
+        <div class="time-big" id="timeDisplay">00:40</div>
+        <div class="round-info" id="roundInfo">SET 1 / 3</div>
+      </div>
+    </div>
+
+    <div class="exercise-name" id="exerciseName">BODYWEIGHT SQUATS</div>
+    <div class="next-label" id="nextLabel">Next: Modified Push-ups</div>
+
+    <div class="controls">
+      <button class="btn btn-sec" id="resetBtn" onclick="resetTimer()" title="Reset">↺</button>
+      <button class="btn btn-main" id="mainBtn" onclick="toggleTimer()">▶</button>
+      <button class="btn btn-sec btn-skip" onclick="skipPhase()">SKIP</button>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="statElapsed">0:00</div><div class="stat-lbl">Elapsed</div></div>
+    <div class="stat"><div class="stat-val" id="statSets">0</div><div class="stat-lbl">Sets Done</div></div>
+    <div class="stat"><div class="stat-val" id="statCals">0</div><div class="stat-lbl">Est. Cal</div></div>
+  </div>
+
+  <!-- EXERCISE QUEUE -->
+  <div class="queue-section">
+    <div class="queue-title">Exercise Queue</div>
+    <div class="queue" id="queue"></div>
+  </div>
+
+  <!-- EXERCISE EDITOR -->
+  <div class="editor-panel" id="editorPanel">
+    <div class="editor-title">Edit Exercises</div>
+    <div class="editor-hint">Tap ✕ to remove · use arrows to reorder</div>
+    <div id="exEditorList"></div>
+    <button class="btn-add-ex" onclick="addExercise()"><span style="font-size:18px;line-height:1">+</span> Add Exercise</button>
+    <button class="btn-apply" onclick="applyExercises()">APPLY & RESET</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="navTimer" onclick="navTo('timer')"><span>⏱</span><span>Timer</span></button>
+    <button class="nav-btn" id="navExercises" onclick="navTo('exercises')"><span>✏</span><span>Exercises</span></button>
+    <button class="nav-btn" id="navSettings" onclick="navTo('settings')"><span>⚙</span><span>Settings</span></button>
+  </div>
+</div>
+
+<!-- COMPLETED OVERLAY -->
+<div class="completed" id="completedOverlay">
+  <div class="complete-icon">🔥</div>
+  <div class="complete-title">DONE!</div>
+  <div class="complete-stats" id="completeStats"></div>
+  <button class="btn-restart" onclick="fullReset()">GO AGAIN</button>
+</div>
+
+<script>
+// ── STATE ──
+let exercises = [
+  {name:"Bodyweight Squats", next:"Modified Push-ups"},
+  {name:"Modified Push-ups", next:"Plank Hold"},
+  {name:"Plank Hold", next:"Glute Bridges"},
+  {name:"Glute Bridges", next:"Standing March"},
+  {name:"Standing March", next:"Done"},
+];
+
+let cfg = {work:40, rest:20, sets:3, exrest:60};
+let mode = 'interval';
+let state = {
+  running:false, phase:'idle',
+  timeLeft:40, currentEx:0, currentSet:1,
+  totalElapsed:0, totalSets:0,
+  swTime:0, cdTime:180,
+  interval:null, elapsedInterval:null
+};
+
+// ── AUDIO ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+function getACtx(){if(!actx) actx=new AudioCtx(); return actx;}
+function beep(freq=880, dur=0.08, vol=0.3, type='sine'){
+  if(!document.getElementById('soundToggle').checked) return;
+  try{
+    const a=getACtx(), o=a.createOscillator(), g=a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.frequency.value=freq; o.type=type;
+    g.gain.setValueAtTime(vol,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+    o.start(); o.stop(a.currentTime+dur);
+  }catch(e){}
+}
+function beepWork(){beep(880,0.12,0.4,'square');setTimeout(()=>beep(1100,0.1,0.3,'square'),130);}
+function beepRest(){beep(440,0.15,0.3,'sine');}
+function beepDone(){
+  [0,150,300,500].forEach((d,i)=>{
+    setTimeout(()=>beep([660,770,880,1100][i],0.2,0.4,'sine'),d);
+  });
+}
+function beepCountdown(){if(document.getElementById('beepToggle').checked) beep(660,0.05,0.2,'sine');}
+
+// ── FORMATTING ──
+function fmt(s){
+  const m=Math.floor(s/60), sec=s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ── RING ──
+const CIRCUMFERENCE = 2*Math.PI*110;
+function setRing(ratio, isRest){
+  const ring = document.getElementById('ringProgress');
+  ring.style.strokeDashoffset = CIRCUMFERENCE*(1-Math.max(0,Math.min(1,ratio)));
+  ring.classList.toggle('rest', isRest);
+}
+
+// ── UI UPDATE ──
+function updateUI(){
+  const d=document.getElementById('timeDisplay');
+  const p=document.getElementById('phaseLabel');
+  const r=document.getElementById('roundInfo');
+  const en=document.getElementById('exerciseName');
+  const nl=document.getElementById('nextLabel');
+
+  if(mode==='interval'){
+    d.textContent = fmt(state.timeLeft);
+    const warning = state.timeLeft<=3 && state.running;
+    d.classList.toggle('warning', warning);
+
+    if(state.phase==='work'){
+      p.textContent='WORK'; p.className='phase-label work';
+      setRing(state.timeLeft/cfg.work, false);
+    } else if(state.phase==='rest'){
+      p.textContent='REST'; p.className='phase-label rest';
+      setRing(state.timeLeft/cfg.rest, true);
+    } else if(state.phase==='exrest'){
+      p.textContent='RECOVER'; p.className='phase-label rest';
+      setRing(state.timeLeft/cfg.exrest, true);
+    } else {
+      p.textContent='READY'; p.className='phase-label';
+      setRing(1, false);
+    }
+
+    const ex = exercises[state.currentEx] || exercises[0];
+    en.textContent = ex.name.toUpperCase();
+    nl.textContent = ex.next !== 'Done' ? `Next: ${ex.next}` : 'Last exercise!';
+    r.textContent = `SET ${state.currentSet} / ${cfg.sets}`;
+
+  } else if(mode==='stopwatch'){
+    d.textContent = fmt(state.swTime);
+    d.classList.remove('warning');
+    p.textContent='STOPWATCH'; p.className='phase-label';
+    setRing(1, false);
+    r.textContent = fmt(state.totalElapsed);
+    en.textContent='';nl.textContent='';
+
+  } else if(mode==='countdown'){
+    d.textContent = fmt(state.cdTime);
+    d.classList.toggle('warning', state.cdTime<=5 && state.running);
+    p.textContent='COUNTDOWN'; p.className='phase-label';
+    setRing(state.cdTime/180, false);
+    r.textContent='';en.textContent='';nl.textContent='';
+  }
+
+  // stats
+  document.getElementById('statElapsed').textContent = fmt(state.totalElapsed);
+  document.getElementById('statSets').textContent = state.totalSets;
+  document.getElementById('statCals').textContent = Math.round(state.totalElapsed*0.1);
+
+  // main btn
+  const mb=document.getElementById('mainBtn');
+  mb.textContent = state.running ? '⏸' : '▶';
+
+  updateQueue();
+}
+
+function updateQueue(){
+  const q = document.getElementById('queue');
+  q.innerHTML = exercises.map((ex,i)=>{
+    let cls = 'queue-item';
+    if(i<state.currentEx) cls+=' done';
+    if(i===state.currentEx && state.running) cls+=' current';
+    return `<div class="${cls}"><span>${ex.name}</span><span class="ex-sets">${cfg.sets}×${cfg.work}s</span></div>`;
+  }).join('');
+}
+
+// ── INTERVAL LOGIC ──
+function tick(){
+  state.totalElapsed++;
+  if(mode==='stopwatch'){state.swTime++;updateUI();return;}
+  if(mode==='countdown'){
+    if(state.cdTime>0){
+      state.cdTime--;
+      if(state.cdTime<=3 && state.cdTime>0) beepCountdown();
+      if(state.cdTime===0){beepDone();stopTimer();}
+    }
+    updateUI();return;
+  }
+
+  // interval mode
+  if(state.phase==='idle') return;
+  state.timeLeft--;
+  if(state.timeLeft<=3 && state.timeLeft>0 && state.phase!=='exrest') beepCountdown();
+
+  if(state.timeLeft<=0){
+    if(state.phase==='work'){
+      state.totalSets++;
+      if(state.currentSet<cfg.sets){
+        state.phase='rest'; state.timeLeft=cfg.rest; beepRest();
+      } else {
+        state.currentEx++;
+        if(state.currentEx>=exercises.length){
+          stopTimer(); showComplete(); return;
+        }
+        state.currentSet=1;
+        state.phase='exrest'; state.timeLeft=cfg.exrest; beepRest();
+      }
+    } else if(state.phase==='rest'){
+      state.currentSet++;
+      state.phase='work'; state.timeLeft=cfg.work; beepWork();
+    } else if(state.phase==='exrest'){
+      state.phase='work'; state.timeLeft=cfg.work; beepWork();
+    }
+  }
+  updateUI();
+}
+
+function startTimer(){
+  if(state.phase==='idle' && mode==='interval'){
+    state.phase='work'; state.timeLeft=cfg.work; beepWork();
+  }
+  state.running=true;
+  state.interval=setInterval(tick,1000);
+  updateUI();
+}
+function stopTimer(){
+  state.running=false;
+  clearInterval(state.interval);
+  updateUI();
+}
+function toggleTimer(){
+  if(state.running) stopTimer(); else startTimer();
+}
+function resetTimer(){
+  stopTimer();
+  if(mode==='interval'){
+    state.phase='idle'; state.timeLeft=cfg.work;
+    state.currentEx=0; state.currentSet=1;
+    state.totalSets=0; state.totalElapsed=0;
+    setRing(1,false);
+  } else if(mode==='stopwatch'){
+    state.swTime=0; state.totalElapsed=0;
+  } else {
+    state.cdTime=180;
+  }
+  updateUI();
+}
+function skipPhase(){
+  if(!state.running || mode!=='interval') return;
+  state.timeLeft=1; tick();
+}
+
+// ── MODE SWITCH ──
+function setMode(m){
+  stopTimer();
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['interval','stopwatch','countdown'][i]===m);
+  });
+  resetTimer();
+}
+
+// ── SETTINGS ──
+function adjust(key, delta){
+  const mins={work:5,rest:5,sets:1,exrest:10};
+  const maxs={work:300,rest:300,sets:10,exrest:300};
+  cfg[key]=Math.max(mins[key],Math.min(maxs[key],cfg[key]+delta));
+  const ids={work:'workVal',rest:'restVal',sets:'setsVal',exrest:'exrestVal'};
+  document.getElementById(ids[key]).textContent=cfg[key];
+  if(!state.running) resetTimer();
+}
+
+// ── NAV ──
+function navTo(page){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nav'+page.charAt(0).toUpperCase()+page.slice(1));
+  if(nb) nb.classList.add('active');
+  document.getElementById('settingsPanel').classList.toggle('open', page==='settings');
+  document.getElementById('editorPanel').classList.toggle('open', page==='exercises');
+  if(page==='exercises') renderExEditor();
+}
+
+// ── EXERCISE EDITOR ──
+let editList = [...exercises.map(e=>e.name)];
+
+function renderExEditor(){
+  editList = exercises.map(e=>e.name);
+  const el=document.getElementById('exEditorList');
+  el.innerHTML=editList.map((name,i)=>`
+    <div class="ex-edit-item" id="exitem${i}">
+      <span class="drag-handle">☰</span>
+      <input class="ex-input" type="text" value="${name}" id="exinput${i}" placeholder="Exercise name" maxlength="40"/>
+      <button class="ex-up" onclick="moveEx(${i},-1)" ${i===0?'style="opacity:0.2;pointer-events:none"':''}>▲</button>
+      <button class="ex-down" onclick="moveEx(${i},1)" ${i===editList.length-1?'style="opacity:0.2;pointer-events:none"':''}>▼</button>
+      <button class="ex-del" onclick="removeEx(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function syncEditList(){
+  editList=[];
+  document.querySelectorAll('.ex-input').forEach(inp=>{
+    const v=inp.value.trim();
+    if(v) editList.push(v);
+  });
+}
+
+function addExercise(){
+  syncEditList();
+  editList.push('New Exercise');
+  renderExEditorFromList();
+  // focus last input
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('.ex-input');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },50);
+}
+
+function removeEx(i){
+  syncEditList();
+  if(editList.length<=1){return;}
+  editList.splice(i,1);
+  renderExEditorFromList();
+}
+
+function moveEx(i,dir){
+  syncEditList();
+  const j=i+dir;
+  if(j<0||j>=editList.length) return;
+  [editList[i],editList[j]]=[editList[j],editList[i]];
+  renderExEditorFromList();
+}
+
+function renderExEditorFromList(){
+  const el=document.getElementById('exEditorList');
+  el.innerHTML=editList.map((name,i)=>`
+    <div class="ex-edit-item" id="exitem${i}">
+      <span class="drag-handle">☰</span>
+      <input class="ex-input" type="text" value="${name}" id="exinput${i}" placeholder="Exercise name" maxlength="40"/>
+      <button class="ex-up" onclick="moveEx(${i},-1)" ${i===0?'style="opacity:0.2;pointer-events:none"':''}>▲</button>
+      <button class="ex-down" onclick="moveEx(${i},1)" ${i===editList.length-1?'style="opacity:0.2;pointer-events:none"':''}>▼</button>
+      <button class="ex-del" onclick="removeEx(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function applyExercises(){
+  syncEditList();
+  const names=editList.filter(n=>n.trim());
+  if(!names.length) return;
+  exercises=names.map((name,i)=>({
+    name,
+    next: i<names.length-1 ? names[i+1] : 'Done'
+  }));
+  stopTimer();
+  state.currentEx=0; state.currentSet=1;
+  state.phase='idle'; state.timeLeft=cfg.work;
+  state.totalSets=0; state.totalElapsed=0;
+  navTo('timer');
+  updateUI();
+}
+
+// ── COMPLETE ──
+function showComplete(){
+  const o=document.getElementById('completedOverlay');
+  document.getElementById('completeStats').innerHTML=
+    `Total Time: ${fmt(state.totalElapsed)}<br>Sets Completed: ${state.totalSets}<br>Est. Calories: ${Math.round(state.totalElapsed*0.1)}`;
+  o.classList.add('show');
+  beepDone();
+}
+function fullReset(){
+  document.getElementById('completedOverlay').classList.remove('show');
+  resetTimer();
+}
+
+// ── INIT ──
+updateUI();
+</script>
+</body>
+</html>
