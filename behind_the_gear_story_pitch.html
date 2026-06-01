@@ -1,0 +1,419 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .deck {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--color-text-primary);
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .slide {
+    display: none;
+    min-height: 420px;
+    padding: 2.5rem 2.5rem 2rem;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary);
+    position: relative;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .slide.active { display: flex; }
+
+  .slide-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .ouroboros-deco {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 0.5px solid var(--color-border-tertiary);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .ouroboros-deco2 {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 0.5px solid var(--color-border-secondary);
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  .headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 2.1rem;
+    line-height: 1.2;
+    color: var(--color-text-primary);
+    margin-bottom: 0.6rem;
+  }
+  .headline em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .subline {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-weight: 300;
+    margin-bottom: 2rem;
+    letter-spacing: 0.04em;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 0.5px solid;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pill-rose  { border-color: #D4537E; color: #D4537E; background: #FBEAF0; }
+  .pill-amber { border-color: #BA7517; color: #854F0B; background: #FAEEDA; }
+  .pill-blue  { border-color: #185FA5; color: #0C447C; background: #E6F1FB; }
+  .pill-teal  { border-color: #0F6E56; color: #085041; background: #E1F5EE; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 1.2rem;
+  }
+
+  .char-block {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+  }
+  .char-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 0.5px solid var(--color-border-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #D4537E;
+    background: #FBEAF0;
+    flex-shrink: 0;
+  }
+  .char-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .char-title {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+  .char-note {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  .q-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .q-list li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+  }
+  .q-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #D4537E;
+    margin-top: 1px;
+  }
+
+  .news-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  .news-card {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 14px 16px;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .news-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .news-card-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+  }
+
+  .summary-para {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.75;
+    color: var(--color-text-primary);
+    border-left: 2px solid #D4537E;
+    padding-left: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .wot-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--color-text-tertiary);
+    margin-top: auto;
+    text-align: right;
+    padding-top: 1rem;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+  .nav-btn {
+    background: transparent;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 7px 18px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background 0.15s;
+  }
+  .nav-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+  .progress-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-border-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .dot.active-dot { background: #D4537E; }
+
+  .gear-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #FBEAF0;
+    border: 0.5px solid #ED93B1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .divider-line {
+    border: none;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin: 1rem 0;
+  }
+
+  .thread-accent {
+    display: inline-block;
+    width: 32px;
+    height: 1px;
+    background: #D4537E;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+</style>
+
+<h2 class="sr-only" style="position:absolute;left:-9999px;top:-9999px">Behind the Gear: Story Pitch — MO-SS086 Gender and Society, Mapua-Malayan Digital College</h2>
+
+<div class="deck">
+  <div class="slide active" id="slide-0">
+    <div class="ouroboros-deco"></div>
+    <div class="ouroboros-deco2"></div>
+    <div>
+      <p class="slide-label">MO-SS086 · Gender and Society · Story Pitch</p>
+      <div class="gear-icon-wrap" aria-hidden="true">
+        <i class="ti ti-settings" style="font-size:22px; color:#D4537E;"></i>
+      </div>
+      <h1 class="headline">Behind the Gear<br><em>The Wheel Weaves<br>as the Wheel Wills</em></h1>
+      <p class="subline">A story of a woman who rose from the smallest cog<br>to the center of the machine — despite every force against her.</p>
+    </div>
+    <div>
+      <div class="pill-row">
+        <span class="pill pill-rose">Workplace Discrimination</span>
+        <span class="pill pill-amber">Gender &amp; Society</span>
+        <span class="pill pill-blue">Engineering</span>
+        <span class="pill pill-teal">Resilience</span>
+      </div>
+      <p class="wot-quote">"The Wheel weaves as the Wheel wills, and we are but the thread." — The Wheel of Time</p>
+    </div>
+  </div>
+
+  <div class="slide" id="slide-1">
+    <div class="ouroboros-deco"></div>
+    <div class="ouroboros-deco2"></div>
+    <div>
+      <p class="slide-label">One-paragraph summary</p>
+      <p class="summary-para">A woman who defied every unspoken rule of a field that was never designed for her — and rose to the apotheosis of her career anyway. She did not conform to the room. She changed what the room expected. She stood in high heels, in dignity, and refused to be a footnote in someone else's blueprint.</p>
+      <hr class="divider-line">
+      <p style="font-size:13px; color:var(--color-text-secondary); line-height:1.65;">This is not a story about survival. It is a story about a woman who turned systemic resistance into fuel — who understood, like the Wheel of Time, that the pattern does not break. It bends around those with the will to endure.</p>
+    </div>
+    <p class="wot-quote">"She was not a tool. She was the smith."</p>
+  </div>
+
+  <div class="slide" id="slide-2">
+    <div class="ouroboros-deco"></div>
+    <div class="ouroboros-deco2"></div>
+    <div>
+      <p class="slide-label">Character profile</p>
+      <div class="char-block">
+        <div class="char-avatar">MD</div>
+        <div>
+          <p class="char-name">Engr. Moiraine Damodred</p>
+          <p class="char-title">Infrastructure Division · Umbrella Global Holdings</p>
+          <p class="char-note">Central figure of the story. She started as the smallest part of a very large machine — and became the axis it turns on. Her story is told through five essential questions that cut to the bone of what it means to persist where you are not expected to thrive.</p>
+        </div>
+      </div>
+      <hr class="divider-line">
+      <p style="font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--color-text-tertiary); margin-bottom:10px; font-weight:500;">Her role in this story</p>
+      <p style="font-size:13px; color:var(--color-text-primary); line-height:1.65;">She is not a symbol. She is a person. The story follows her as a fully realized protagonist — not a cautionary tale, not a trophy. A woman who carried the weight of a biased industry on her shoulders and built something anyway.</p>
+    </div>
+  </div>
+
+  <div class="slide" id="slide-3">
+    <div class="ouroboros-deco"></div>
+    <div class="ouroboros-deco2"></div>
+    <div>
+      <p class="slide-label">Interview questions</p>
+      <p class="section-title" style="margin-bottom:1rem;"><span class="thread-accent"></span>Five questions that matter</p>
+      <ol class="q-list">
+        <li><span class="q-num">01</span><span>Can you describe what it felt like walking into a room full of male engineers for the very first time in your career?</span></li>
+        <li><span class="q-num">02</span><span>What was the most defining moment where you chose to stay, despite every pressure telling you to leave?</span></li>
+        <li><span class="q-num">03</span><span>How has being a woman shaped the way you approach engineering problems and leadership decisions?</span></li>
+        <li><span class="q-num">04</span><span>What specific barriers did you face climbing to your current position — and how did you dismantle them?</span></li>
+        <li><span class="q-num">05</span><span>What would you say to a young woman in engineering school who is second-guessing whether she belongs?</span></li>
+      </ol>
+    </div>
+    <p class="wot-quote">"The questions are the threads. The answers are the pattern."</p>
+  </div>
+
+  <div class="slide" id="slide-4">
+    <div class="ouroboros-deco"></div>
+    <div class="ouroboros-deco2"></div>
+    <div>
+      <p class="slide-label">Newsworthiness</p>
+      <div class="news-grid">
+        <div class="news-card">
+          <p class="news-card-label">Why it matters now</p>
+          <p class="news-card-text">Workplace discrimination and the absence of structural protection for women in technical fields is not historical — it is ongoing. This story names it directly.</p>
+        </div>
+        <div class="news-card">
+          <p class="news-card-label">What people will learn</p>
+          <p class="news-card-text">That perseverance in the most extreme conditions is not weakness — and that the path, though unmarked, is navigable with will and clarity.</p>
+        </div>
+        <div class="news-card">
+          <p class="news-card-label">Why tell it now</p>
+          <p class="news-card-text">Because the gear keeps turning — quietly, without credit — and someone must name the mechanism for what it is: a system that still needs to change.</p>
+        </div>
+        <div class="news-card">
+          <p class="news-card-label">The surprise element</p>
+          <p class="news-card-text">The story's explosive turn — a moment of rupture that forces the audience to confront what they assumed was already resolved.</p>
+        </div>
+      </div>
+    </div>
+    <p class="wot-quote">"Not the storm. The eye of it — and the woman who stood there."</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)" disabled>← Prev</button>
+    <div class="progress-dots" id="dots"></div>
+    <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+  const total = 5;
+  let current = 0;
+
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active-dot' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active-dot');
+    current = n;
+    document.getElementById('slide-' + current).classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active-dot');
+    document.getElementById('prev-btn').disabled = current === 0;
+    document.getElementById('next-btn').disabled = current === total - 1;
+  }
+
+  function navigate(dir) { goTo(Math.max(0, Math.min(total - 1, current + dir))); }
+</script>
