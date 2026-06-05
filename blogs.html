@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blog | Leigh's Insights</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #39ff6a;
+      --dim: #a0a0a0;
+      --bg: #0d0d0d;
+      --card: #111111;
+      --border: #1e1e1e;
+      --text: #e0e0e0;
+      --card-hover: #1a1a1a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    header {
+      padding: 3rem 2rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .prompt {
+      color: var(--green);
+      font-size: 13px;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: normal;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    h1 span {
+      color: var(--green);
+    }
+
+    .tagline {
+      color: var(--dim);
+      font-size: 13px;
+      margin-top: 0.5rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--dim);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--green); }
+
+    section {
+      padding: 2.5rem 2rem;
+    }
+
+    .section-label {
+      color: var(--green);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .blogs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .blog-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .blog-card:hover {
+      background: var(--card-hover);
+      border-color: var(--green);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(57, 255, 106, 0.1);
+    }
+
+    .blog-date {
+      color: var(--green);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .blog-title {
+      font-size: 18px;
+      color: #ffffff;
+      margin-bottom: 0.75rem;
+      font-weight: normal;
+    }
+
+    .blog-desc {
+      color: var(--dim);
+      font-size: 13px;
+      margin-bottom: 1rem;
+      flex-grow: 1;
+    }
+
+    .blog-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .blog-tag {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      color: var(--green);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+
+    .back-link {
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .back-link a {
+      color: var(--dim);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    .back-link a:hover { color: var(--green); }
+
+    .back-link span {
+      color: var(--green);
+      margin-right: 8px;
+    }
+
+    footer {
+      padding: 1.5rem 2rem;
+      color: #3a3a3a;
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: var(--green);
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .blogs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="prompt">~/portfolio $</div>
+  <h1>Blog Posts<span class="cursor"></span></h1>
+  <p class="tagline">Tips, guides, and technical insights</p>
+  <nav>
+    <a href="index.html">home</a>
+    <a href="index.html#projects">projects</a>
+    <a href="index.html#contact">contact</a>
+  </nav>
+</header>
+
+<section>
+  <div class="section-label">// latest posts</div>
+  
+  <div class="blogs-grid">
+    
+    <a href="tips.html" class="blog-card">
+      <div class="blog-date">Guide</div>
+      <div class="blog-title">How to Encrypt Your Flash Drive with VeraCrypt</div>
+      <div class="blog-desc">A plain-language guide for securing files on USB drives. Covers setup, daily use, and critical security rules.</div>
+      <div class="blog-tags">
+        <span class="blog-tag">encryption</span>
+        <span class="blog-tag">veracrypt</span>
+        <span class="blog-tag">security</span>
+      </div>
+    </a>
+
+    <!-- Template for adding more blogs. Copy and paste this structure, update the href, title, description, and tags -->
+    <!-- 
+    <a href="your-new-blog.html" class="blog-card">
+      <div class="blog-date">Article / Guide / Tip</div>
+      <div class="blog-title">Your Blog Title Here</div>
+      <div class="blog-desc">Brief description of what this blog post covers.</div>
+      <div class="blog-tags">
+        <span class="blog-tag">tag1</span>
+        <span class="blog-tag">tag2</span>
+        <span class="blog-tag">tag3</span>
+      </div>
+    </a>
+    -->
+
+  </div>
+</section>
+
+<div class="back-link">
+  <a href="index.html"><span>←</span> Back to Portfolio</a>
+</div>
+
+<footer>
+  built with github pages
+</footer>
+
+</body>
+</html>
