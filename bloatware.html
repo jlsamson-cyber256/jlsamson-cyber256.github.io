@@ -232,13 +232,15 @@
 <br>Bloatware refers to unwanted pre-installed software on devices, often included by manufacturers or carriers, that consumes system resources without providing meaningful value. It can slow down device performance and may be difficult to remove.</p>
 
                 <h2>So How to Remove Bloatware?</h2>
-                <br>It's easy actually in ADB just list all the relevant packages
-                <br>adb shell pm list packages -3 #list all 3rd-party apps you have installed, helpful if you have granularity on 3rd-party installs
-                <br>adb shell pm uninstall -k --user 0 [com.apkhere]</p>
+                <h3>It's easy actually in ADB just list all the relevant packages<h3>
+                <ol>
+                <li>adb shell pm list packages -3 #list all 3rd-party apps you have installed, helpful if you have granularity on 3rd-party installs</li>
+                <li>adb shell pm uninstall -k --user 0 [com.apkhere]</li>
+                </ol>
                 <ul>
-    <li>1. device must be in Developer Mode(click the Build Number Multiple times</li>
-    <li>2. activate authorize usb debug bridge</li>
-    <li>3. toggle remove adb timeout authorization, only for that session</li>
+    <li>device must be in Developer Mode(click the Build Number Multiple times</li>
+    <li>activate authorize usb debug bridge</li>
+    <li>toggle remove adb timeout authorization, only for that session</li>
 </ul>
                 <img src="apk-list1" alt="APK list screenshot" style="width:100%; border-radius:4px;">
                 <!--
