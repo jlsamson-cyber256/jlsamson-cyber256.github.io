@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post | Let's Talk Privacy</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green: #39ff6a;
+            --dim: #ffffff;
+            --bg: #0d0d0d;
+            --card: #111111;
+            --border: #1e1e1e;
+            --text: #ffffff;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        header {
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--dim);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--green);
+        }
+
+        .prompt {
+            color: var(--green);
+            font-size: 13px;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: normal;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: var(--dim);
+            font-size: 13px;
+        }
+
+        .post-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+
+        section {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        .section-label {
+            color: var(--green);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+        }
+
+        .post-content {
+            color: var(--text);
+        }
+
+        .post-content p {
+            margin-bottom: 1rem;
+            color: var(--dim);
+            line-height: 1.8;
+        }
+
+        .post-content h2 {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: normal;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .post-content h3 {
+            color: var(--green);
+            font-size: 1.1rem;
+            font-weight: normal;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .post-content ul,
+        .post-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-content li {
+            margin-bottom: 0.5rem;
+            color: var(--dim);
+        }
+
+        .post-content code {
+            background: var(--card);
+            color: var(--green);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .post-content pre {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .post-content pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .post-content blockquote {
+            border-left: 2px solid var(--green);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--dim);
+            font-style: italic;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--green);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        footer {
+            padding: 2rem;
+            text-align: center;
+            color: #3a3a3a;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .post-meta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            .post-content p {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="blogs.html" class="back-link">← back to blogs</a>
+        <div class="prompt">~/blog $</div>
+        <h1>Hi It's Me the Problem is Me, I'm Bloatware</h1>
+        <div class="post-meta">
+            <span>June 8, 2026</span>
+            <span>By Amitabha</span>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <div class="section-label">// com.apkhere</div>
+            <div class="post-content">
+                <p>Bloatwares you hate them, i hate them, who knows maybe somebody loves them but still a bloatware.
+<br>Bloatware refers to unwanted pre-installed software on devices, often included by manufacturers or carriers, that consumes system resources without providing meaningful value. It can slow down device performance and may be difficult to remove.</p>
+
+                <h2>So How to Remove Bloatware?</h2>
+                <br>It's easy actually in ADB just list all the relevant packages
+                <br>adb shell pm list packages -3 #list all 3rd-party apps you have installed, helpful if you have granularity on 3rd-party installs
+                <br>adb shell pm uninstall -k --user 0 [com.apkhere]</p>
+                <ul>
+    <li>1. device must be in Developer Mode(click the Build Number Multiple times</li>
+    <li>2. activate authorize usb debug bridge</li>
+    <li>3. toggle remove adb timeout authorization, only for that session</li>
+</ul>
+                <img src="apk-list1.png" alt="APK list screenshot" style="width:100%; border-radius:4px;">
+                <!--
+                <img src="apk-list1.png" alt="APK list 1" style="width:100%; border-radius:4px;">
+<img src="apk-list2.png" alt="APK list 2" style="width:100%; border-radius:4px;">
+
+                <!--<p>Choose a correct VPN—the heavier the marketing, the lower the protection.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-label">// recommended vpns</div>
+            <div class="post-content">
+                <p>I only recommend these:</p>
+                <ul>
+                    <li><span class="tag">Mullvad</span> — battle tested</li>
+                    <li><span class="tag">Obscura</span> — partners with Mullvad</li>
+                    <li><span class="tag">Proton</span> — large variety of servers</li>
+                    <li><span class="tag">Windscribe VPN</span> — solid option</li>
+                    <li><span class="tag">Self-hosted</span> — setup your own VPN</li>
+                </ul>
+                <p><em>VPNs without a trial period are generally better.</em></p>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-label">// </div>
+            <div class="post-content">
+                <p>You can be law compliant without being data ignorant.</p>
+
+                <h2>Data Privacy</h2>
+                <p>Privacy is held by the people. The people have the right to their data.</p>
+
+                <h2>Data Protection</h2>
+                <p>Protection is held by the vendor. The vendor has the responsibility to protect its users' data, provide proper disclosures and transparency. This separation differentiates privacy marketers from privacy practitioners.</p>
+-->
+
+                <!--
+<ol>
+    <li>item one</li>
+    <li>item two</li>
+</ol>
+                -->
+                <blockquote>Stop Telemetry, Protect your phone memory, nuke em now.</blockquote>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy;built with github pages</p>
+    </footer>
+</body>
+</html>
