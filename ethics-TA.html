@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behind the Gear: The Apotheosis of Engineer Moiraine Damodred</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green: #39ff6a;
+            --dim: #ffffff;
+            --bg: #0d0d0d;
+            --card: #111111;
+            --border: #1e1e1e;
+            --text: #ffffff;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        header {
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--dim);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--green);
+        }
+
+        .prompt {
+            color: var(--green);
+            font-size: 13px;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: normal;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--dim);
+            font-size: 15px;
+            font-style: italic;
+            margin-bottom: 1rem;
+            max-width: 640px;
+        }
+
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: var(--dim);
+            font-size: 13px;
+        }
+
+        .post-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+
+        section {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        .section-label {
+            color: var(--green);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+        }
+
+        .post-content {
+            color: var(--text);
+        }
+
+        .post-content p {
+            margin-bottom: 1rem;
+            color: var(--dim);
+            line-height: 1.8;
+        }
+
+        .post-content h2 {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: normal;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .post-content h3 {
+            color: var(--green);
+            font-size: 1.1rem;
+            font-weight: normal;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .post-content ul,
+        .post-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-content li {
+            margin-bottom: 0.5rem;
+            color: var(--dim);
+        }
+
+        .post-content blockquote {
+            border-left: 2px solid var(--green);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--dim);
+            font-style: italic;
+        }
+
+        .quote-source {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--green);
+            font-style: normal;
+            font-size: 12px;
+        }
+
+        /* ---- Media block: shared wrapper for photos, video, audio ---- */
+        .media-block {
+            margin-bottom: 1.5rem;
+        }
+
+        .media-block img,
+        .media-block video {
+            width: 100%;
+            display: block;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--card);
+        }
+
+        .media-block iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .media-block audio {
+            width: 100%;
+        }
+
+        figcaption,
+        .caption {
+            color: #8a8a8a;
+            font-size: 12px;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        figcaption .caption-label,
+        .caption .caption-label {
+            color: var(--green);
+        }
+
+        /* ---- Infographic / stat strip ---- */
+        .stat-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat .num {
+            color: var(--green);
+            font-size: 1.6rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat .label {
+            color: #8a8a8a;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ---- Credits ---- */
+        .credits-list {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .credits-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px dashed var(--border);
+            color: var(--dim);
+        }
+
+        .credits-list li:last-child {
+            border-bottom: none;
+        }
+
+        .credits-role {
+            color: var(--green);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--green);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        footer {
+            padding: 2rem;
+            text-align: center;
+            color: #3a3a3a;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .post-meta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            .post-content p {
+                font-size: 13px;
+            }
+
+            .stat-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="back-link">← MO-SS086 Feature Story</a>
+        <div class="prompt">~/feature-story $</div>
+        <h1>Behind the Gear: The Apotheosis of Engineer Moiraine Damodred</h1>
+        <p class="subtitle">Inside a macro-engineering stronghold built by men, for men, one engineer's refusal to leave forced the whole machine to reweave its pattern.</p>
+        <div class="post-meta">
+            <span>July 10, 2026</span>
+            <span>By John</span>
+            <span>7 min read</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- ============================================================
+             1. TITLE AND INTRODUCTION
+             ============================================================ -->
+        <section id="introduction">
+            <div class="section-label">// introduction</div>
+            <div class="post-content">
+                <p>
+                    A red folder crosses a steel table. Two hands hold it steady. On either side of that table,
+                    rows of men in identical suits stand in silence, waiting to see whether the woman holding it
+                    will speak, and whether it will matter if she does. That was Engineer Moiraine Damodred's
+                    first room.
+                </p>
+                <p>
+                    This is her story — a story of a woman who defied the pattern of the status quo and rose
+                    from the distant periphery of an organization built to keep her there, to the very center of
+                    its machine. It is also a story about how systemic bias, like a gear turning quietly beneath
+                    a housing plate, can run an entire operation without ever needing to be seen.
+                </p>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             2. MAIN STORY — BACKGROUND
+             ============================================================ -->
+        <section id="background">
+            <div class="section-label">// the story</div>
+            <div class="post-content">
+                <h2>The Architecture of the Status Quo</h2>
+                <p>
+                    Umbrella Global Holdings' Infrastructure Division was, by design and by habit, a rigid
+                    hierarchy — a macro-engineering stronghold where individuals functioned as interchangeable
+                    cogs inside a massive, unforgiving machine. It was not hostile so much as indifferent: a
+                    system that had simply never been built with her in mind.
+                </p>
+
+                <blockquote>
+                    "Can you describe what it felt like walking into a room full of male engineers for the first
+                    time in your career?"
+                    <span class="quote-source">— Interview prompt put to Engineer Damodred</span>
+                </blockquote>
+
+                <p>
+                    Her answer, and the silence that preceded it, established the shape of everything that
+                    followed: an uphill battle inside the quiet of a boys' club, where the absence of raised
+                    voices did not mean the absence of resistance. Damodred started small, at the distant edge
+                    of the organization's chart — but even from there, she was already being tested against
+                    rules no one had bothered to write down for someone like her.
+                </p>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             MAIN STORY — TURNING POINT
+             ============================================================ -->
+        <section id="turning-point">
+            <div class="section-label">// the story continued</div>
+            <div class="post-content">
+                <h2>The Friction Matrix</h2>
+                <p>
+                    The system's flaws were rarely stated outright. They surfaced instead as friction: a lack
+                    of proper protections for a woman in the field, subjective bias dressed up as professional
+                    judgment, logical fallacies baked so deeply into procedure that no one questioned them
+                    anymore, and, eventually, a mounting, unspoken pressure for her simply to leave.
+                </p>
+
+                <div class="stat-strip">
+                    <div class="stat">
+                        <span class="num">1</span>
+                        <span class="label">woman in the first room</span>
+                    </div>
+                    <div class="stat">
+                        <span class="num">3</span>
+                        <span class="label">structural barriers named</span>
+                    </div>
+                    <div class="stat">
+                        <span class="num">0</span>
+                        <span class="label">formal protections in place</span>
+                    </div>
+                </div>
+                <p class="caption"><span class="caption-label">Source:</span> "The Friction Matrix," Behind the Gear: The Apotheosis of Engineer Moiraine Damodred.</p>
+
+                <p>
+                    Against each flaw, Damodred set a countermeasure of her own: extreme perseverance against
+                    the lack of protection, unwavering dignity against the bias, a distinct and deliberately
+                    female lens on engineering leadership against the fallacies, and, against the pressure to
+                    leave, a quiet insistence on staying anyway. The friction between an unyielding system and
+                    an unbreakable will became the defining current of her career.
+                </p>
+
+                <p>
+                    That current ran to an extreme. She described the arc herself as a stable start that gave
+                    way to real pressure and real isolation — the extremest of extremes — before a deliberate,
+                    conscious choice to stay became the hinge her whole story turned on.
+                </p>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             MAIN STORY — CLOSING SECTION
+             ============================================================ -->
+        <section id="resolution">
+            <div class="section-label">// where things stand</div>
+            <div class="post-content">
+                <h2>Commanding the Wheel</h2>
+                <p>
+                    Damodred did not simply endure the system long enough to escape it. She dismantled it,
+                    piece by piece: applying a female lens to engineering leadership where none had existed,
+                    holding her technical brilliance to a standard no one could dispute, and refusing, at every
+                    turn, to trade her dignity for an easier path. She did not just survive the boys' club — she
+                    took it apart brick by brick.
+                </p>
+
+                <blockquote>
+                    "She no longer fights the machine; she directs the pattern."
+                    <span class="quote-source">— Closing line, Behind the Gear</span>
+                </blockquote>
+
+                <p>
+                    What began as one woman standing at a steel table, holding a red folder under the weight of
+                    a room's silence, ended with her at the center of the gear she once had to fight her way
+                    into. The lesson she leaves for the next generation second-guessing their own place is not
+                    that the system was fair to her — it wasn't — but that perseverance paired with an insistence
+                    on real, structural change is what actually reweaves a pattern built without you in mind.
+                </p>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             4. A NEW PATTERN
+             ============================================================ -->
+        <section id="new-pattern">
+            <div class="section-label">// making the invisible system visible</div>
+            <div class="post-content">
+                <h2>A New Pattern for the Next Generation</h2>
+                <p>
+                    Just as a gear turns quietly and its teeth carry a system's load unseen, systemic
+                    discrimination and its logical fallacies tend to operate silently too — until someone
+                    inside the mechanism insists on making them visible. Damodred's story argues that the fix
+                    is not perseverance alone, nor policy alone, but both together: the individual must keep
+                    showing up, and the infrastructure around her must actually change.
+                </p>
+                <ul>
+                    <li>Extreme perseverance — the will to stay when every signal says leave.</li>
+                    <li>A demand for proper protections — formal, not assumed.</li>
+                    <li>Clarity and guidance strong enough to outlast isolation.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             5. CREDITS
+             ============================================================ -->
+        <section id="credits">
+            <div class="section-label">// credits</div>
+            <div class="post-content">
+                <h2>Credits &amp; Sources</h2>
+                <ul class="credits-list">
+                    <li><span>Engineer Moiraine Damodred (case narrative)</span><span class="credits-role">Subject</span></li>
+                    <li><span>"Behind the Gear: The Apotheosis of an Engineer," NotebookLM slide deck</span><span class="credits-role">Source material</span></li>
+                    <li><span>John</span><span class="credits-role">Writer / feature story</span></li>
+                </ul>
+
+                <p style="margin-top: 1.25rem;">
+                    <span class="tag">MO-SS086</span>
+                    <span class="tag">Feature Story</span>
+                    <span class="tag">Gender &amp; Society</span>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>John · MO-SS086 Feature Story Website · 2026</p>
+    </footer>
+</body>
+</html>
