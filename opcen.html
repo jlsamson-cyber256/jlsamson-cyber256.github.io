@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPCEN // Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e13;
+    --panel:#10161e;
+    --panel-raised:#141c26;
+    --hair:#1e2a37;
+    --hair-bright:#2c3d4d;
+    --text:#dbe4ea;
+    --dim:#6c7f91;
+    --dimmer:#465563;
+    --c-weather:#4fc3d9;
+    --c-news:#8b93f0;
+    --c-crisis:#e8935a;
+    --c-security:#5fd98a;
+    --c-cyber:#c77fd9;
+    --alert:#e05a5a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+  }
+  body{
+    background-image:
+      radial-gradient(ellipse at top left, rgba(79,195,217,0.04), transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(199,127,217,0.04), transparent 50%);
+  }
+  ::selection{ background:var(--c-security); color:#08110a; }
+  a{ color:inherit; text-decoration:none; }
+
+  /* ===== TOP BAR ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--hair);
+    background:var(--panel);
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--c-security);
+    box-shadow:0 0 8px var(--c-security);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .brand h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:2px;
+    color:var(--text);
+  }
+  .brand span{ color:var(--dim); font-weight:500; font-size:12px; letter-spacing:1px; }
+  .clockbox{ text-align:right; }
+  .clockbox .time{ font-size:15px; font-weight:600; letter-spacing:1px; }
+  .clockbox .date{ font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:2px;}
+
+  /* ===== TICKER ===== */
+  .ticker-wrap{
+    background:#0d1218;
+    border-bottom:1px solid var(--hair);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:8px 0;
+    position:relative;
+  }
+  .ticker-wrap::before{
+    content:'LIVE FEED'; position:absolute; left:0; top:0; bottom:0;
+    background:var(--bg); color:var(--c-security);
+    font-size:10px; font-weight:600; letter-spacing:2px;
+    display:flex; align-items:center; padding:0 12px;
+    border-right:1px solid var(--hair); z-index:2;
+  }
+  .ticker-track{
+    display:inline-block;
+    padding-left:110px;
+    animation:scroll 90s linear infinite;
+    font-size:12px;
+    color:var(--dim);
+  }
+  .ticker-track span{ margin-right:48px; }
+  .ticker-track span b{ color:var(--text); font-weight:500; }
+  @keyframes scroll{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+  /* ===== GRID ===== */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+    gap:1px;
+    background:var(--hair);
+    border-top:1px solid var(--hair);
+  }
+  .panel{
+    background:var(--panel);
+    display:flex; flex-direction:column;
+    min-height:340px;
+    max-height:480px;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px;
+    border-bottom:1px solid var(--hair);
+    background:var(--panel-raised);
+  }
+  .panel-head .label{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px; font-weight:600; letter-spacing:1.5px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-head .chan{ color:var(--dimmer); font-size:10px; font-weight:500; letter-spacing:1px; }
+  .bars{ display:flex; gap:2px; align-items:flex-end; height:14px; }
+  .bars i{ width:3px; display:block; border-radius:1px; background:var(--dimmer); }
+  .bars i:nth-child(1){ height:4px; } .bars i:nth-child(2){ height:7px; }
+  .bars i:nth-child(3){ height:10px; } .bars i:nth-child(4){ height:14px; }
+  .panel.live .bars i{ background:currentColor; }
+
+  .panel-body{
+    padding:14px 16px;
+    overflow-y:auto;
+    flex:1;
+    font-size:12.5px;
+    line-height:1.55;
+  }
+  .panel-body::-webkit-scrollbar{ width:6px; }
+  .panel-body::-webkit-scrollbar-thumb{ background:var(--hair-bright); border-radius:3px; }
+
+  .row{ padding:8px 0; border-bottom:1px solid var(--hair); }
+  .row:last-child{ border-bottom:none; }
+  .row a.title{ color:var(--text); font-weight:500; display:block; }
+  .row a.title:hover{ text-decoration:underline; }
+  .row .meta{ color:var(--dim); font-size:10.5px; margin-top:3px; letter-spacing:.3px; }
+  .tag{
+    display:inline-block; font-size:9.5px; font-weight:600; letter-spacing:1px;
+    padding:1px 6px; border-radius:2px; margin-right:6px;
+  }
+
+  .stat-line{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--hair); }
+  .stat-line:last-child{ border-bottom:none; }
+  .stat-line .k{ color:var(--dim); }
+  .stat-line .v{ font-weight:600; }
+
+  .loading{ color:var(--dim); font-size:11px; letter-spacing:1px; }
+  .error{ color:var(--alert); font-size:11px; }
+
+  /* channel colors */
+  #panel-weather .panel-head, #panel-weather .bars{ color:var(--c-weather); }
+  #panel-news .panel-head, #panel-news .bars{ color:var(--c-news); }
+  #panel-crisis .panel-head, #panel-crisis .bars{ color:var(--c-crisis); }
+  #panel-security .panel-head, #panel-security .bars{ color:var(--c-security); }
+  #panel-cyber .panel-head, #panel-cyber .bars{ color:var(--c-cyber); }
+
+  .weather-hero{ display:flex; align-items:baseline; gap:10px; padding:6px 0 14px; }
+  .weather-hero .temp{ font-family:'Space Grotesk', sans-serif; font-size:38px; font-weight:700; }
+  .weather-hero .cond{ color:var(--dim); font-size:12px; }
+  .weather-loc{ font-size:11px; color:var(--dim); letter-spacing:.5px; margin-bottom:4px; }
+
+  footer{
+    padding:16px 24px 28px;
+    color:var(--dimmer);
+    font-size:10.5px;
+    letter-spacing:.5px;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+
+  @media(max-width:640px){
+    .topbar{ flex-direction:column; align-items:flex-start; gap:6px; }
+    .clockbox{ text-align:left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="dot"></div>
+    <h1>OPCEN</h1>
+    <span>OPERATIONS CENTER — SITUATIONAL AWARENESS CONSOLE</span>
+  </div>
+  <div class="clockbox">
+    <div class="time" id="clock">--:--:--</div>
+    <div class="date" id="dateline">-- --- ----</div>
+  </div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker">
+    <span>Initializing feed uplinks…</span>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="panel-weather">
+    <div class="panel-head">
+      <div class="label"><span class="chan">CH.01</span> ATMOS / WEATHER</div>
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel-body" id="weather-body">
+      <div class="loading">ACQUIRING SIGNAL…</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-crisis">
+    <div class="panel-head">
+      <div class="label"><span class="chan">CH.02</span> DISASTER / CRISIS</div>
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel-body" id="crisis-body">
+      <div class="loading">ACQUIRING SIGNAL…</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-news">
+    <div class="panel-head">
+      <div class="label"><span class="chan">CH.03</span> SITREP / WORLD NEWS</div>
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel-body" id="news-body">
+      <div class="loading">ACQUIRING SIGNAL…</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-security">
+    <div class="panel-head">
+      <div class="label"><span class="chan">CH.04</span> SECURITY / GEOPOL</div>
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel-body" id="security-body">
+      <div class="loading">ACQUIRING SIGNAL…</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-cyber">
+    <div class="panel-head">
+      <div class="label"><span class="chan">CH.05</span> CYBERSEC / CVE</div>
+      <div class="bars"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel-body" id="cyber-body">
+      <div class="loading">ACQUIRING SIGNAL…</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>OPCEN v1.0 — client-side console, no backend, no login</span>
+  <span id="refresh-note">last full refresh: —</span>
+</footer>
+
+<script>
+/* ---------- CLOCK ---------- */
+function tickClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+  document.getElementById('dateline').textContent = now.toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric' }).toUpperCase();
+}
+tickClock(); setInterval(tickClock, 1000);
+
+/* ---------- CONFIG ---------- */
+// Free RSS->JSON proxy, no key required for light use.
+// For heavier/reliable use, get a free key at https://rss2json.com and append &api_key=YOURKEY below.
+const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
+const FALLBACK_LOC = { lat: 14.5995, lon: 120.9842, name: 'Manila, PH (default)' };
+
+const FEEDS = {
+  news: [
+    { name:'Reuters World', url:'https://feeds.reuters.com/Reuters/worldNews' },
+    { name:'AP Top News', url:'https://apnews.com/apf-topnews.rss' }
+  ],
+  crisis: [
+    { name:'ReliefWeb', url:'https://reliefweb.int/updates/rss.xml' },
+    { name:'GDACS', url:'https://www.gdacs.org/xml/rss.xml' }
+  ],
+  security: [
+    { name:'Krebs on Security', url:'https://krebsonsecurity.com/feed/' }
+  ],
+  cyber: [
+    { name:'The Hacker News', url:'https://feeds.feedburner.com/TheHackersNews' },
+    { name:'BleepingComputer', url:'https://www.bleepingcomputer.com/feed/' }
+  ]
+};
+
+const tickerItems = [];
+
+/* ---------- HELPERS ---------- */
+function timeAgo(dateStr){
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const diff = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (diff < 60) return diff + 'm ago';
+  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
+  return Math.floor(diff/1440) + 'd ago';
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function markLive(panelId){ document.getElementById(panelId).classList.add('live'); }
+
+async function fetchFeed(url){
+  const res = await fetch(RSS_PROXY + encodeURIComponent(url));
+  if (!res.ok) throw new Error('proxy error');
+  const data = await res.json();
+  if (data.status !== 'ok') throw new Error('feed error');
+  return data.items || [];
+}
+
+function renderFeedPanel(bodyId, panelId, sourceLabel, items, colorVar, limit){
+  const body = document.getElementById(bodyId);
+  if (!items.length){
+    body.innerHTML = '<div class="error">NO DATA RETURNED</div>';
+    return;
+  }
+  markLive(panelId);
+  body.innerHTML = items.slice(0, limit).map(it => `
+    <div class="row">
+      <a class="title" href="${it.link}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+      <div class="meta"><span class="tag" style="background:${colorVar}22;color:${colorVar}">${sourceLabel}</span>${timeAgo(it.pubDate)}</div>
+    </div>
+  `).join('');
+  items.slice(0,3).forEach(it => tickerItems.push(`<span><b>[${sourceLabel}]</b> ${escapeHtml(it.title)}</span>`));
+}
+
+async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
+  const body = document.getElementById(bodyId);
+  try{
+    const results = await Promise.allSettled(feedList.map(f => fetchFeed(f.url)));
+    let combined = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled'){
+        r.value.slice(0, perFeedLimit).forEach(item => combined.push({...item, _source: feedList[i].name}));
+      }
+    });
+    combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+    if (!combined.length){
+      body.innerHTML = '<div class="error">FEED UNREACHABLE — proxy may be rate-limited. Get a free key at rss2json.com for reliability.</div>';
+      return;
+    }
+    markLive(panelId);
+    body.innerHTML = combined.slice(0, 10).map(it => `
+      <div class="row">
+        <a class="title" href="${it.link}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+        <div class="meta"><span class="tag" style="background:${colorVar}22;color:${colorVar}">${it._source}</span>${timeAgo(it.pubDate)}</div>
+      </div>
+    `).join('');
+    combined.slice(0,3).forEach(it => tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`));
+  } catch(e){
+    body.innerHTML = '<div class="error">FEED UNREACHABLE</div>';
+  }
+}
+
+/* ---------- WEATHER ---------- */
+function weatherCodeToText(code){
+  const map = {
+    0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+    45:'Fog',48:'Depositing rime fog',
+    51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',
+    61:'Slight rain',63:'Rain',65:'Heavy rain',
+    71:'Slight snow',73:'Snow',75:'Heavy snow',
+    80:'Rain showers',81:'Rain showers',82:'Violent rain showers',
+    95:'Thunderstorm',96:'Thunderstorm w/ hail',99:'Severe thunderstorm'
+  };
+  return map[code] || 'Conditions unknown';
+}
+
+async function loadWeather(lat, lon, locName){
+  const body = document.getElementById('weather-body');
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const cur = data.current;
+    markLive('panel-weather');
+    body.innerHTML = `
+      <div class="weather-loc">${escapeHtml(locName)}</div>
+      <div class="weather-hero">
+        <div class="temp">${Math.round(cur.temperature_2m)}°C</div>
+        <div class="cond">${weatherCodeToText(cur.weather_code)}</div>
+      </div>
+      <div class="stat-line"><span class="k">Humidity</span><span class="v">${cur.relative_humidity_2m}%</span></div>
+      <div class="stat-line"><span class="k">Wind speed</span><span class="v">${cur.wind_speed_10m} km/h</span></div>
+      <div class="stat-line"><span class="k">Today's high / low</span><span class="v">${Math.round(data.daily.temperature_2m_max[0])}° / ${Math.round(data.daily.temperature_2m_min[0])}°</span></div>
+    `;
+  } catch(e){
+    body.innerHTML = '<div class="error">WEATHER FEED UNREACHABLE</div>';
+  }
+}
+
+function initWeather(){
+  if (navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos => loadWeather(pos.coords.latitude, pos.coords.longitude, 'Current location'),
+      () => loadWeather(FALLBACK_LOC.lat, FALLBACK_LOC.lon, FALLBACK_LOC.name),
+      { timeout: 5000 }
+    );
+  } else {
+    loadWeather(FALLBACK_LOC.lat, FALLBACK_LOC.lon, FALLBACK_LOC.name);
+  }
+}
+
+/* ---------- EARTHQUAKES (USGS, no key, CORS-friendly) merged into crisis panel ---------- */
+async function loadEarthquakes(){
+  try{
+    const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson');
+    const data = await res.json();
+    return data.features.slice(0,5).map(f => ({
+      title: `M${f.properties.mag.toFixed(1)} — ${f.properties.place}`,
+      link: f.properties.url,
+      pubDate: new Date(f.properties.time).toISOString(),
+      _source: 'USGS'
+    }));
+  } catch(e){ return []; }
+}
+
+async function loadCrisisPanel(){
+  const body = document.getElementById('crisis-body');
+  const [quakes, feedResults] = await Promise.all([
+    loadEarthquakes(),
+    Promise.allSettled(FEEDS.crisis.map(f => fetchFeed(f.url)))
+  ]);
+  let combined = [...quakes];
+  feedResults.forEach((r, i) => {
+    if (r.status === 'fulfilled'){
+      r.value.slice(0,6).forEach(item => combined.push({...item, _source: FEEDS.crisis[i].name}));
+    }
+  });
+  combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  if (!combined.length){
+    body.innerHTML = '<div class="error">FEED UNREACHABLE</div>';
+    return;
+  }
+  markLive('panel-crisis');
+  body.innerHTML = combined.slice(0,10).map(it => `
+    <div class="row">
+      <a class="title" href="${it.link}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+      <div class="meta"><span class="tag" style="background:#e8935a22;color:#e8935a">${it._source}</span>${timeAgo(it.pubDate)}</div>
+    </div>
+  `).join('');
+  combined.slice(0,3).forEach(it => tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`));
+}
+
+/* ---------- TICKER RENDER ---------- */
+function renderTicker(){
+  const el = document.getElementById('ticker');
+  if (!tickerItems.length){
+    el.innerHTML = '<span>No live items yet — feeds still loading, or proxy rate-limited.</span>';
+    return;
+  }
+  const loop = tickerItems.concat(tickerItems); // duplicate for seamless scroll
+  el.innerHTML = loop.join('');
+}
+
+/* ---------- BOOT ---------- */
+async function boot(){
+  initWeather();
+  await Promise.all([
+    loadCrisisPanel(),
+    loadCategory(FEEDS.news, 'news-body', 'panel-news', '#8b93f0', 8),
+    loadCategory(FEEDS.security, 'security-body', 'panel-security', '#5fd98a', 10),
+    loadCategory(FEEDS.cyber, 'cyber-body', 'panel-cyber', '#c77fd9', 8)
+  ]);
+  renderTicker();
+  document.getElementById('refresh-note').textContent = 'last full refresh: ' + new Date().toLocaleTimeString('en-GB');
+}
+boot();
+setInterval(boot, 10 * 60 * 1000); // refresh every 10 minutes
+</script>
+</body>
+</html>
