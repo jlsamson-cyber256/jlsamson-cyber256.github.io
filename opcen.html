@@ -375,7 +375,7 @@ function weatherCodeToText(code){
 async function loadWeather(lat, lon, locName){
   const body = document.getElementById('weather-body');
   try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,apparent_temperature_max,sunrise,sunset,rain_sum,precipitation_sum&hourly=temperature_2m,precipitation,rain,weather_code,cloud_cover,wind_gusts_10m,wind_speed_10m,precipitation_probability,relative_humidity_2m,apparent_temperature&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,showers,weather_code&timezone=Australia%2FSydney`;
     const res = await fetch(url);
     const data = await res.json();
     const cur = data.current;
