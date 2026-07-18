@@ -1,0 +1,664 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecSheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&amp;family=Space+Grotesk:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0e0e10;
+  --bg2:      #141416;
+  --bg3:      #1a1a1e;
+  --border:   #242428;
+  --border2:  #2e2e34;
+  --text:     #c8c8d0;
+  --text2:    #6c6c78;
+  --text3:    #3a3a44;
+  --accent:   #44aaff;
+  --accent2:  #2277cc;
+  --green:    #3ddc97;
+  --red:      #ff5555;
+  --orange:   #ffaa33;
+  --purple:   #bb88ff;
+  --yellow:   #ffdd44;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Space Grotesk', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--sans); font-size: 13px; background: var(--bg); color: var(--text); display: flex; }
+
+/* SIDEBAR */
+#sidebar { width: 230px; min-width: 230px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+#sidebar-header { padding: 16px 14px 12px; border-bottom: 1px solid var(--border); }
+#sidebar-header .logo { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
+#sidebar-header .logo .dot { color: var(--red); }
+#sidebar-header .sub { font-size: 10px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; font-family: var(--mono); }
+#search-wrap { padding: 10px 10px 8px; border-bottom: 1px solid var(--border); }
+#search-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--sans); font-size: 12px; padding: 6px 10px; outline: none; }
+#search-input:focus { border-color: var(--accent); }
+#search-input::placeholder { color: var(--text3); }
+#folder-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+.folder-row { display: flex; align-items: center; border-left: 2px solid transparent; }
+.folder-row.active { border-left-color: var(--accent); background: rgba(68,170,255,.05); }
+.folder-btn { flex: 1; background: none; border: none; color: var(--text2); text-align: left; padding: 9px 12px; cursor: pointer; font-family: var(--sans); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.folder-row.active .folder-btn { color: var(--text); }
+.folder-btn:hover { color: var(--text); }
+.folder-btn .fname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.folder-btn .cnt { font-size: 10px; color: var(--text3); background: var(--bg3); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; font-family: var(--mono); }
+.folder-row.active .folder-btn .cnt { color: var(--accent); }
+.folder-del { background: none; border: none; color: var(--text3); cursor: pointer; padding: 0 10px; font-size: 16px; line-height: 1; opacity: 0; transition: opacity .15s; }
+.folder-row:hover .folder-del { opacity: 1; }
+.folder-del:hover { color: var(--red); }
+#sidebar-footer { padding: 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+#btn-new-folder { width: 100%; padding: 8px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); cursor: pointer; font-size: 11px; border-radius: 4px; font-family: var(--sans); letter-spacing: .3px; transition: all .15s; }
+#btn-new-folder:hover { color: var(--accent); border-color: var(--accent); }
+#save-indicator { text-align: center; font-size: 10px; font-family: var(--mono); color: var(--text3); padding: 2px 0; }
+
+/* MAIN */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#topbar { padding: 11px 18px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+#folder-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; font-family: var(--sans); }
+#cmd-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.tbtn { padding: 6px 13px; border-radius: 4px; font-size: 11px; cursor: pointer; border: 1px solid var(--border2); font-family: var(--sans); font-weight: 500; letter-spacing: .3px; transition: all .15s; }
+#btn-add-cmd { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+#btn-add-cmd:hover { background: var(--accent); border-color: var(--accent); }
+#btn-export { background: var(--bg3); color: var(--text2); }
+#btn-export:hover { color: var(--green); border-color: var(--green); }
+
+/* TAG FILTER BAR */
+#tag-bar { padding: 7px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#tag-bar span { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-right: 4px; }
+.tag-filter { padding: 3px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); font-family: var(--mono); letter-spacing: .5px; text-transform: uppercase; transition: all .15s; }
+.tag-filter:hover { color: var(--text); }
+.tag-filter.all.active    { background: var(--border2); color: var(--text); }
+.tag-filter.recon.active  { background: #1a3a55; border-color: var(--accent); color: var(--accent); }
+.tag-filter.network.active{ background: #1a3a2a; border-color: var(--green); color: var(--green); }
+.tag-filter.forensic.active{ background: #2a1a44; border-color: var(--purple); color: var(--purple); }
+.tag-filter.exploit.active{ background: #3a1a1a; border-color: var(--red); color: var(--red); }
+.tag-filter.privesc.active{ background: #3a2a1a; border-color: var(--orange); color: var(--orange); }
+.tag-filter.defense.active{ background: #3a3a1a; border-color: var(--yellow); color: var(--yellow); }
+
+/* CMD AREA */
+#cmd-area { flex: 1; overflow-y: auto; padding: 14px 18px; display: grid; gap: 10px; align-content: start; }
+.cmd-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; position: relative; transition: border-color .15s; }
+.cmd-card:hover { border-color: var(--border2); }
+.cmd-actions { position: absolute; top: 10px; right: 10px; display: none; gap: 5px; }
+.cmd-card:hover .cmd-actions { display: flex; }
+.cbtn { padding: 3px 9px; font-size: 10px; border-radius: 3px; border: 1px solid var(--border2); cursor: pointer; background: var(--bg3); font-family: var(--sans); font-weight: 500; transition: all .15s; }
+.cbtn.cp { color: var(--accent); } .cbtn.cp:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+.cbtn.ed { color: var(--orange); } .cbtn.ed:hover { background: #3a2510; border-color: var(--orange); }
+.cbtn.dl { color: var(--red); }   .cbtn.dl:hover { background: #3a1010; border-color: var(--red); }
+.cmd-card-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; padding-right: 110px; }
+.cmd-tag { font-size: 9px; padding: 2px 7px; border-radius: 3px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .8px; flex-shrink: 0; border: 1px solid; }
+.tag-recon   { color: var(--accent);  border-color: #1a3a55; background: #0d1e2d; }
+.tag-network { color: var(--green);   border-color: #1a3a2a; background: #0d1e16; }
+.tag-forensic{ color: var(--purple);  border-color: #2a1a44; background: #160d22; }
+.tag-exploit { color: var(--red);     border-color: #3a1a1a; background: #1e0d0d; }
+.tag-privesc { color: var(--orange);  border-color: #3a2a1a; background: #1e160d; }
+.tag-defense { color: var(--yellow);  border-color: #3a3a1a; background: #1e1e0d; }
+.cmd-code { font-family: var(--mono); font-size: 11.5px; color: #88ccff; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 9px 12px; white-space: pre-wrap; word-break: break-all; cursor: pointer; line-height: 1.6; transition: background .15s; }
+.cmd-code:hover { background: #0a0a0c; border-color: var(--border2); }
+.cmd-note { font-size: 10.5px; color: var(--text2); margin-top: 7px; font-family: var(--mono); border-left: 2px solid var(--border2); padding-left: 8px; }
+.cmd-note::before { content: '// '; color: var(--text3); }
+.empty-state { text-align: center; color: var(--text3); padding: 60px 20px; font-size: 12px; font-family: var(--mono); line-height: 2; }
+.empty-state .big { font-size: 28px; margin-bottom: 12px; display: block; }
+
+/* MODALS */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 50; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; padding: 22px; width: 460px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 18px; font-family: var(--sans); }
+.modal label { display: block; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; margin-top: 14px; font-family: var(--mono); }
+.modal input, .modal textarea, .modal select { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); padding: 8px 11px; font-size: 12px; font-family: var(--sans); outline: none; }
+.modal textarea { font-family: var(--mono); resize: vertical; font-size: 11.5px; }
+.modal input:focus, .modal textarea:focus, .modal select:focus { border-color: var(--accent); }
+.modal select option { background: var(--bg2); }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.modal-btns button { padding: 8px 18px; border-radius: 4px; border: 1px solid var(--border2); cursor: pointer; font-size: 12px; font-family: var(--sans); font-weight: 500; }
+.btn-cancel { background: var(--bg3); color: var(--text2); } .btn-cancel:hover { color: var(--text); }
+.btn-ok { background: var(--accent2); border-color: var(--accent2); color: #fff; } .btn-ok:hover { background: var(--accent); border-color: var(--accent); }
+
+/* EXPORT MODAL */
+.export-formats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.export-formats button { padding: 12px 10px; border-radius: 5px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); cursor: pointer; font-family: var(--sans); font-size: 12px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all .15s; }
+.export-formats button:hover { border-color: var(--accent); color: var(--accent); background: rgba(68,170,255,.08); }
+.export-formats .ico { font-family: var(--mono); font-size: 15px; letter-spacing: 0; }
+.export-hint { font-size: 10px; color: var(--text3); margin-top: 14px; font-family: var(--mono); line-height: 1.7; border-left: 2px solid var(--border2); padding-left: 8px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg3); border: 1px solid var(--green); color: var(--green); padding: 8px 16px; border-radius: 4px; font-size: 11px; z-index: 999; font-family: var(--mono); animation: fadeout 1.4s ease forwards; }
+.toast.err { border-color: var(--red); color: var(--red); }
+@keyframes fadeout { 0%{opacity:1;transform:translateY(0)} 70%{opacity:1} 100%{opacity:0;transform:translateY(6px)} }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <div class="logo">SEC<span class="dot">.</span>SHEET</div>
+    <div class="sub">Command Bible</div>
+  </div>
+  <div id="search-wrap">
+    <input id="search-input" type="text" placeholder="Search commands... (Ctrl+F)">
+  </div>
+  <div id="folder-list"><div style="padding:20px 14px;color:#3a3a44;font-size:11px;font-family:var(--mono)">No folders yet.<br>Create one below.</div></div>
+  <div id="sidebar-footer">
+    <button id="btn-new-folder">+ New Folder</button>
+    <div id="save-indicator">● session only — export to keep</div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div id="folder-title">SecSheet</div>
+    <div id="cmd-count"></div>
+    <button class="tbtn" id="btn-export">⇩ Export</button>
+    <button class="tbtn" id="btn-add-cmd">+ Add Command</button>
+  </div>
+  <div id="tag-bar">
+    <span>Filter:</span>
+    <button class="tag-filter all active" data-tag="all">All</button>
+    <button class="tag-filter recon" data-tag="recon">Recon</button>
+    <button class="tag-filter network" data-tag="network">Network</button>
+    <button class="tag-filter forensic" data-tag="forensic">Forensic</button>
+    <button class="tag-filter exploit" data-tag="exploit">Exploit</button>
+    <button class="tag-filter privesc" data-tag="privesc">PrivEsc</button>
+    <button class="tag-filter defense" data-tag="defense">Defense</button>
+  </div>
+  <div id="cmd-area"><div class="empty-state"><span class="big">📁</span>Create a folder on the left to get started.</div></div>
+</div>
+
+<!-- Folder Modal -->
+<div class="overlay" id="fmodal">
+  <div class="modal">
+    <h3 id="fmodal-title">New Folder</h3>
+    <label>Folder Name</label>
+    <input id="f-name" type="text" placeholder="e.g. Nmap, Wireshark, Web Pentest...">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="fmodal-cancel">Cancel</button>
+      <button class="btn-ok" id="fmodal-ok">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Command Modal -->
+<div class="overlay" id="cmodal">
+  <div class="modal">
+    <h3 id="cmodal-title">Edit Command</h3>
+    <label>Title</label>
+    <input id="c-title" type="text" placeholder="Short description of what this does">
+    <label>Command / Syntax</label>
+    <textarea id="c-cmd" rows="5" placeholder="e.g. nmap -sV -sC -oN out.txt 10.10.10.x"></textarea>
+    <label>Note (optional)</label>
+    <input id="c-note" type="text" placeholder="e.g. Replace eth0 with your interface">
+    <label>Tag</label>
+    <select id="c-tag">
+      <option value="recon">Recon</option>
+      <option value="network">Network</option>
+      <option value="forensic">Forensic</option>
+      <option value="exploit">Exploit</option>
+      <option value="privesc">PrivEsc</option>
+      <option value="defense">Defense</option>
+    </select>
+    <label>Folder</label>
+    <select id="c-folder"></select>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="cmodal-cancel">Cancel</button>
+      <button class="btn-ok" id="cmodal-ok">Save Command</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="overlay" id="exportmodal">
+  <div class="modal">
+    <h3>Export</h3>
+    <label>Scope</label>
+    <select id="exp-scope">
+      <option value="current">Current folder only</option>
+      <option value="all">All folders</option>
+    </select>
+    <div class="export-formats">
+      <button id="exp-html" type="button"><span class="ico">&lt;/&gt;</span>HTML</button>
+      <button id="exp-pdf" type="button"><span class="ico">▤</span>PDF</button>
+      <button id="exp-word" type="button"><span class="ico">W</span>Word (.doc)</button>
+      <button id="exp-txt" type="button"><span class="ico">≡</span>Plain Text</button>
+    </div>
+    <div class="export-hint">
+      PDF opens your browser's print dialog — choose "Save as PDF".<br>
+      The Word file also opens cleanly in Google Docs (File → Open → Upload).
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="exportmodal-cancel">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── SESSION-ONLY STATE (no localStorage) ──
+  var folders = [];
+  var commands = [];
+  var activeFolder = null;
+  var editFolderId = null;
+  var editCmdId = null;
+  var activeTag = 'all';
+  var searchQ = '';
+
+  function uid() { return '_' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── SESSION PERSISTENCE ONLY ──
+  function load() {
+    folders = [];
+    commands = [];
+    activeFolder = null;
+  }
+
+  function save() {
+    // intentionally no-op: data lives in memory only for this session
+  }
+
+  // ── TOAST ──
+  function toast(msg, err) {
+    var t = document.createElement('div');
+    t.className = 'toast' + (err ? ' err' : '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode) t.remove(); }, 1400);
+  }
+
+  // ── RENDER SIDEBAR ──
+  function renderSidebar() {
+    var list = document.getElementById('folder-list');
+    list.innerHTML = '';
+    if (!folders.length) {
+      list.innerHTML = '<div style="padding:20px 14px;color:#3a3a44;font-size:11px;font-family:var(--mono)">No folders yet.<br>Create one below.</div>';
+      return;
+    }
+    folders.forEach(function(f) {
+      var cnt = commands.filter(function(c){ return c.folderId === f.id; }).length;
+      var row = document.createElement('div');
+      row.className = 'folder-row' + (activeFolder === f.id ? ' active' : '');
+
+      var btn = document.createElement('button');
+      btn.className = 'folder-btn';
+      btn.innerHTML = '<span class="fname">' + esc(f.name) + '</span><span class="cnt">' + cnt + '</span>';
+      btn.addEventListener('click', function() { activeFolder = f.id; activeTag = 'all'; renderAll(); save(); });
+      btn.addEventListener('dblclick', function(e) { e.stopPropagation(); openFolderModal(f); });
+
+      var del = document.createElement('button');
+      del.className = 'folder-del';
+      del.innerHTML = '&times;';
+      del.title = 'Delete folder';
+      del.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!confirm('Delete folder "' + f.name + '" and all its commands?')) return;
+        commands     = commands.filter(function(c){ return c.folderId !== f.id; });
+        folders      = folders.filter(function(x){ return x.id !== f.id; });
+        if (activeFolder === f.id) activeFolder = folders[0] ? folders[0].id : null;
+        save(); renderAll();
+      });
+
+      row.appendChild(btn);
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+
+  // ── RENDER COMMANDS ──
+  function renderCommands() {
+    var area    = document.getElementById('cmd-area');
+    var title   = document.getElementById('folder-title');
+    var countEl = document.getElementById('cmd-count');
+    area.innerHTML = '';
+
+    if (!folders.length) {
+      title.textContent = 'SecSheet';
+      countEl.textContent = '';
+      area.innerHTML = '<div class="empty-state"><span class="big">📁</span>Create a folder on the left to get started.</div>';
+      return;
+    }
+    if (!activeFolder) {
+      title.textContent = 'SecSheet';
+      countEl.textContent = '';
+      area.innerHTML = '<div class="empty-state"><span class="big">←</span>Select a folder.</div>';
+      return;
+    }
+
+    var f = folders.find(function(x){ return x.id === activeFolder; });
+    title.textContent = f ? f.name : '';
+
+    var cmds = commands.filter(function(c){ return c.folderId === activeFolder; });
+
+    if (activeTag !== 'all') {
+      cmds = cmds.filter(function(c){ return c.tag === activeTag; });
+    }
+    if (searchQ) {
+      var q = searchQ.toLowerCase();
+      cmds = cmds.filter(function(c){
+        return (c.title + c.cmd + c.note + c.tag).toLowerCase().indexOf(q) >= 0;
+      });
+    }
+
+    countEl.textContent = cmds.length + ' command' + (cmds.length !== 1 ? 's' : '');
+
+    if (!cmds.length) {
+      area.innerHTML = '<div class="empty-state"><span class="big">+</span>No commands here.<br>Click &ldquo;+ Add Command&rdquo; to add one.</div>';
+      return;
+    }
+
+    cmds.forEach(function(cmd) {
+      var card = document.createElement('div');
+      card.className = 'cmd-card';
+      card.innerHTML =
+        '<div class="cmd-actions">' +
+          '<button class="cbtn cp">Copy</button>' +
+          '<button class="cbtn ed">Edit</button>' +
+          '<button class="cbtn dl">Del</button>' +
+        '</div>' +
+        '<div class="cmd-card-title">' +
+          '<span class="cmd-tag tag-' + cmd.tag + '">' + cmd.tag + '</span>' +
+          esc(cmd.title) +
+        '</div>' +
+        '<div class="cmd-code">' + esc(cmd.cmd) + '</div>' +
+        (cmd.note ? '<div class="cmd-note">' + esc(cmd.note) + '</div>' : '');
+
+      (function(cmdRef) {
+        card.querySelector('.cmd-code').addEventListener('click', function() {
+          navigator.clipboard.writeText(cmdRef.cmd).then(function(){ toast('Copied to clipboard'); });
+        });
+        card.querySelector('.cbtn.cp').addEventListener('click', function() {
+          navigator.clipboard.writeText(cmdRef.cmd).then(function(){ toast('Copied to clipboard'); });
+        });
+        card.querySelector('.cbtn.ed').addEventListener('click', function() { openCmdModal(cmdRef); });
+        card.querySelector('.cbtn.dl').addEventListener('click', function() {
+          if (!confirm('Delete "' + cmdRef.title + '"?')) return;
+          commands = commands.filter(function(x){ return x.id !== cmdRef.id; });
+          save(); renderAll();
+        });
+      })(cmd);
+
+      area.appendChild(card);
+    });
+  }
+
+  function renderAll() { renderSidebar(); renderCommands(); }
+
+  // ── TAG FILTER ──
+  document.querySelectorAll('.tag-filter').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      activeTag = this.dataset.tag;
+      document.querySelectorAll('.tag-filter').forEach(function(b){ b.classList.remove('active'); });
+      this.classList.add('active');
+      renderCommands();
+    });
+  });
+
+  // ── SEARCH ──
+  document.getElementById('search-input').addEventListener('input', function() {
+    searchQ = this.value.trim();
+    renderCommands();
+  });
+
+  // ── FOLDER MODAL ──
+  function openFolderModal(existing) {
+    editFolderId = existing ? existing.id : null;
+    document.getElementById('fmodal-title').textContent = existing ? 'Rename Folder' : 'New Folder';
+    document.getElementById('f-name').value = existing ? existing.name : '';
+    document.getElementById('fmodal').classList.add('open');
+    setTimeout(function(){ document.getElementById('f-name').focus(); }, 30);
+  }
+
+  document.getElementById('btn-new-folder').addEventListener('click', function() { openFolderModal(null); });
+  document.getElementById('fmodal-cancel').addEventListener('click', function() { document.getElementById('fmodal').classList.remove('open'); });
+  document.getElementById('fmodal-ok').addEventListener('click', function() {
+    var name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Folder name is required.'); return; }
+    if (editFolderId) {
+      var f = folders.find(function(x){ return x.id === editFolderId; });
+      if (f) f.name = name;
+    } else {
+      var nf = { id: uid(), name: name };
+      folders.push(nf);
+      activeFolder = nf.id;
+    }
+    document.getElementById('fmodal').classList.remove('open');
+    save(); renderAll();
+  });
+  document.getElementById('f-name').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('fmodal-ok').click(); });
+
+  // ── CMD MODAL ──
+  function openCmdModal(existing) {
+    editCmdId = existing ? existing.id : null;
+    document.getElementById('cmodal-title').textContent = existing ? 'Edit Command' : 'Add Command';
+    document.getElementById('c-title').value = existing ? existing.title : '';
+    document.getElementById('c-cmd').value   = existing ? existing.cmd   : '';
+    document.getElementById('c-note').value  = existing ? (existing.note || '') : '';
+
+    var sel = document.getElementById('c-folder');
+    sel.innerHTML = folders.map(function(f) {
+      var selected = (existing ? existing.folderId : activeFolder) === f.id ? ' selected' : '';
+      return '<option value="' + f.id + '"' + selected + '>' + esc(f.name) + '</option>';
+    }).join('');
+
+    document.getElementById('c-tag').value = existing ? existing.tag : 'recon';
+    document.getElementById('cmodal').classList.add('open');
+    setTimeout(function(){ document.getElementById('c-title').focus(); }, 30);
+  }
+
+  document.getElementById('btn-add-cmd').addEventListener('click', function() {
+    if (!folders.length) { alert('Create a folder first.'); return; }
+    if (!activeFolder)   { alert('Select a folder first.'); return; }
+    openCmdModal(null);
+  });
+  document.getElementById('cmodal-cancel').addEventListener('click', function() { document.getElementById('cmodal').classList.remove('open'); });
+  document.getElementById('cmodal-ok').addEventListener('click', function() {
+    var title    = document.getElementById('c-title').value.trim();
+    var cmd      = document.getElementById('c-cmd').value.trim();
+    var note     = document.getElementById('c-note').value.trim();
+    var tag      = document.getElementById('c-tag').value;
+    var folderId = document.getElementById('c-folder').value;
+    if (!title || !cmd) { alert('Title and Command are required.'); return; }
+    if (editCmdId) {
+      var idx = commands.findIndex(function(c){ return c.id === editCmdId; });
+      if (idx >= 0) commands[idx] = { id: editCmdId, folderId: folderId, tag: tag, title: title, cmd: cmd, note: note };
+    } else {
+      commands.push({ id: uid(), folderId: folderId, tag: tag, title: title, cmd: cmd, note: note });
+    }
+    document.getElementById('cmodal').classList.remove('open');
+    save(); renderAll();
+    toast('Command saved');
+  });
+
+  // ── CLOSE MODALS ON OVERLAY CLICK ──
+  document.getElementById('fmodal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+  document.getElementById('cmodal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+  document.getElementById('exportmodal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+
+  // ── KEYBOARD SHORTCUTS ──
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('fmodal').classList.remove('open');
+      document.getElementById('cmodal').classList.remove('open');
+      document.getElementById('exportmodal').classList.remove('open');
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      e.preventDefault();
+      if (activeFolder) openCmdModal(null);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      document.getElementById('search-input').focus();
+      document.getElementById('search-input').select();
+    }
+  });
+
+  // ── EXPORT ──
+  function stamp() { return new Date().toISOString().slice(0, 10); }
+
+  function getExportData(scope) {
+    var src = (scope === 'all') ? folders : folders.filter(function(f){ return f.id === activeFolder; });
+    return src.map(function(f) {
+      return { name: f.name, commands: commands.filter(function(c){ return c.folderId === f.id; }) };
+    });
+  }
+
+  function downloadBlob(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  }
+
+  // Plain text
+  function buildText(data) {
+    var lines = ['SECSHEET — COMMAND EXPORT', 'Generated: ' + new Date().toLocaleString(), '='.repeat(60)];
+    data.forEach(function(f) {
+      lines.push('');
+      lines.push('# ' + f.name);
+      lines.push('-'.repeat(f.name.length + 2));
+      if (!f.commands.length) { lines.push('(no commands)'); return; }
+      f.commands.forEach(function(c) {
+        lines.push('');
+        lines.push('[' + c.tag.toUpperCase() + '] ' + c.title);
+        lines.push('  $ ' + c.cmd.split('\n').join('\n  $ '));
+        if (c.note) lines.push('  // ' + c.note);
+      });
+    });
+    return lines.join('\n');
+  }
+
+  // Shared printable/HTML report markup (used for HTML export and PDF print)
+  var REPORT_CSS =
+    "body{font-family:'Space Grotesk',sans-serif;background:#fff;color:#1a1a1e;margin:0;padding:32px 40px;}" +
+    "h1{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:1px;margin:0;}" +
+    "h1 .dot{color:#ff5555;}" +
+    ".r-sub{font-size:11px;color:#6c6c78;font-family:'JetBrains Mono',monospace;margin-top:4px;letter-spacing:.5px;}" +
+    "header{border-bottom:2px solid #1a1a1e;padding-bottom:14px;margin-bottom:26px;}" +
+    ".r-folder{margin-bottom:30px;page-break-inside:avoid;}" +
+    ".r-folder h2{font-size:14px;font-family:'Space Grotesk',sans-serif;font-weight:600;border-left:3px solid #2277cc;padding-left:9px;margin-bottom:14px;}" +
+    ".r-card{border:1px solid #ddd;border-radius:6px;padding:12px 14px;margin-bottom:10px;page-break-inside:avoid;}" +
+    ".r-card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;font-weight:600;}" +
+    ".r-tag{font-size:9px;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;border:1px solid;flex-shrink:0;}" +
+    ".r-tag-recon{color:#2277cc;border-color:#2277cc;background:#eaf3fb;}" +
+    ".r-tag-network{color:#159a63;border-color:#159a63;background:#e9f8f1;}" +
+    ".r-tag-forensic{color:#8855dd;border-color:#8855dd;background:#f1eafb;}" +
+    ".r-tag-exploit{color:#dd3333;border-color:#dd3333;background:#fbeaea;}" +
+    ".r-tag-privesc{color:#dd8811;border-color:#dd8811;background:#fbf1e6;}" +
+    ".r-tag-defense{color:#bb9900;border-color:#bb9900;background:#fbf7e6;}" +
+    ".r-code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:#f4f4f6;border:1px solid #e2e2e6;border-radius:4px;padding:9px 12px;white-space:pre-wrap;word-break:break-all;line-height:1.6;margin:0;}" +
+    ".r-note{font-size:10.5px;color:#666;margin-top:7px;font-family:'JetBrains Mono',monospace;border-left:2px solid #ccc;padding-left:8px;}" +
+    ".r-empty{font-size:11px;color:#999;font-family:'JetBrains Mono',monospace;padding:6px 0;}" +
+    "@media print{body{padding:14px 18px;}.r-card{border-color:#bbb;}}";
+
+  function buildReportHTML(data) {
+    var body = data.map(function(f) {
+      var inner = f.commands.length
+        ? f.commands.map(function(c) {
+            return '<div class="r-card">' +
+              '<div class="r-card-head"><span class="r-tag r-tag-' + c.tag + '">' + c.tag + '</span><span>' + esc(c.title) + '</span></div>' +
+              '<pre class="r-code">' + esc(c.cmd) + '</pre>' +
+              (c.note ? '<div class="r-note">// ' + esc(c.note) + '</div>' : '') +
+            '</div>';
+          }).join('')
+        : '<div class="r-empty">No commands in this folder.</div>';
+      return '<section class="r-folder"><h2>' + esc(f.name) + '</h2>' + inner + '</section>';
+    }).join('');
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SecSheet Export</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">' +
+      '<style>' + REPORT_CSS + '</style></head><body>' +
+      '<header><h1>SEC<span class="dot">.</span>SHEET</h1><div class="r-sub">Command Export — ' + new Date().toLocaleString() + '</div></header>' +
+      '<main>' + body + '</main></body></html>';
+  }
+
+  // Word-compatible export: inline styles for reliable rendering in Word / Google Docs
+  function buildWordHTML(data) {
+    var tagColors = { recon:'#2277cc', network:'#159a63', forensic:'#8855dd', exploit:'#dd3333', privesc:'#dd8811', defense:'#bb9900' };
+    var body = data.map(function(f) {
+      var inner = f.commands.length
+        ? f.commands.map(function(c) {
+            var col = tagColors[c.tag] || '#333';
+            return '<div style="border:1px solid #ddd;border-radius:6px;padding:10px 12px;margin:0 0 10px 0;">' +
+              '<div style="font-family:Calibri,sans-serif;font-size:12.5pt;font-weight:bold;margin-bottom:6px;">' +
+                '<span style="font-family:Consolas,monospace;font-size:8.5pt;color:' + col + ';border:1px solid ' + col + ';border-radius:3px;padding:1px 6px;text-transform:uppercase;margin-right:8px;">' + c.tag + '</span>' +
+                esc(c.title) +
+              '</div>' +
+              '<div style="font-family:Consolas,monospace;font-size:10.5pt;background:#f4f4f6;border:1px solid #e2e2e6;padding:8px 10px;white-space:pre-wrap;">' + esc(c.cmd) + '</div>' +
+              (c.note ? '<div style="font-family:Consolas,monospace;font-size:9.5pt;color:#666;margin-top:6px;border-left:2px solid #ccc;padding-left:8px;">// ' + esc(c.note) + '</div>' : '') +
+            '</div>';
+          }).join('')
+        : '<div style="font-family:Consolas,monospace;font-size:10pt;color:#999;">No commands in this folder.</div>';
+      return '<h2 style="font-family:Calibri,sans-serif;font-size:15pt;border-left:3px solid #2277cc;padding-left:9px;margin:22px 0 12px 0;">' + esc(f.name) + '</h2>' + inner;
+    }).join('');
+
+    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="UTF-8"><title>SecSheet Export</title></head><body>' +
+      '<h1 style="font-family:Consolas,monospace;font-size:18pt;letter-spacing:1px;">SEC.SHEET</h1>' +
+      '<div style="font-family:Consolas,monospace;font-size:9.5pt;color:#6c6c78;margin-bottom:18px;">Command Export — ' + new Date().toLocaleString() + '</div>' +
+      body + '</body></html>';
+  }
+
+  function exportPdf(data) {
+    var html = buildReportHTML(data);
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0'; iframe.style.bottom = '0';
+    iframe.style.width = '0'; iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+    setTimeout(function() {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(function() { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1000);
+    }, 350);
+  }
+
+  function doExport(fmt) {
+    var scope = document.getElementById('exp-scope').value;
+    if (scope === 'current' && !activeFolder) { alert('Select a folder first.'); return; }
+    if (!folders.length) { alert('Nothing to export yet.'); return; }
+    var data = getExportData(scope);
+    var s = stamp();
+    if (fmt === 'html') downloadBlob(buildReportHTML(data), 'secsheet-' + s + '.html', 'text/html');
+    else if (fmt === 'txt') downloadBlob(buildText(data), 'secsheet-' + s + '.txt', 'text/plain');
+    else if (fmt === 'word') downloadBlob(buildWordHTML(data), 'secsheet-' + s + '.doc', 'application/msword');
+    else if (fmt === 'pdf') { exportPdf(data); document.getElementById('exportmodal').classList.remove('open'); return; }
+    document.getElementById('exportmodal').classList.remove('open');
+    toast('Export ready — check your downloads');
+  }
+
+  document.getElementById('btn-export').addEventListener('click', function() {
+    if (!folders.length) { alert('Create a folder and add commands first.'); return; }
+    document.getElementById('exp-scope').value = activeFolder ? 'current' : 'all';
+    document.getElementById('exportmodal').classList.add('open');
+  });
+  document.getElementById('exportmodal-cancel').addEventListener('click', function() { document.getElementById('exportmodal').classList.remove('open'); });
+  document.getElementById('exp-html').addEventListener('click', function() { doExport('html'); });
+  document.getElementById('exp-pdf').addEventListener('click', function() { doExport('pdf'); });
+  document.getElementById('exp-word').addEventListener('click', function() { doExport('word'); });
+  document.getElementById('exp-txt').addEventListener('click', function() { doExport('txt'); });
+
+  // ── INIT ──
+  load();
+  renderAll();
+})();
+</script>
+
+
+</body></html>
