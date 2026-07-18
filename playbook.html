@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Playbook</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #0d0d0d;
+    color: #c9d1d9;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  a { color: #58a6ff; }
+
+  /* layout */
+  .container { max-width: 780px; margin: 0 auto; }
+
+  /* header */
+  header {
+    border-bottom: 1px solid #21262d;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  header h1 { font-size: 1.1rem; color: #e6edf3; letter-spacing: .05em; }
+  header span { font-size: .75rem; color: #484f58; }
+
+  /* toolbar */
+  .toolbar {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    align-items: center;
+  }
+  .toolbar input[type=text] {
+    flex: 1;
+    min-width: 160px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: .4rem .6rem;
+    font-family: inherit;
+    font-size: .8rem;
+    border-radius: 4px;
+  }
+  .toolbar input[type=text]:focus { outline: none; border-color: #58a6ff; }
+  .toolbar select {
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    padding: .4rem .5rem;
+    font-family: inherit;
+    font-size: .8rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .toolbar select:focus { outline: none; border-color: #58a6ff; }
+
+  /* buttons */
+  button {
+    font-family: inherit;
+    font-size: .8rem;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: .4rem .8rem;
+    border: 1px solid #30363d;
+    background: #161b22;
+    color: #c9d1d9;
+    transition: border-color .15s, background .15s;
+  }
+  button:hover { border-color: #58a6ff; background: #1c2128; }
+  button.primary { background: #238636; border-color: #2ea043; color: #ffffff; }
+  button.primary:hover { background: #2ea043; }
+
+  /* stats */
+  .stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .stat { font-size: .75rem; color: #484f58; }
+  .stat b { color: #8b949e; font-weight: normal; }
+
+  /* entry list */
+  .entry {
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    margin-bottom: .75rem;
+    overflow: hidden;
+    background: #0d1117;
+  }
+  .entry-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .6rem .75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .entry-head:hover { background: #161b22; }
+  .tag {
+    font-size: .65rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    border: 1px solid;
+    white-space: nowrap;
+    font-weight: bold;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .tag-concept  { color: #79c0ff; border-color: #1f6feb; }
+  .tag-tool     { color: #7ee787; border-color: #238636; }
+  .tag-protocol { color: #d2a8ff; border-color: #6e40c9; }
+  .tag-attack   { color: #ff7b72; border-color: #b62324; }
+  .tag-defense  { color: #56d364; border-color: #196c2e; }
+  .tag-framework{ color: #ffa657; border-color: #9e6a03; }
+  .tag-incident { color: #f85149; border-color: #6e1a19; }
+  .tag-note     { color: #8b949e; border-color: #30363d; }
+
+  .entry-title { flex: 1; font-size: .88rem; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .entry-date  { font-size: .7rem; color: #484f58; white-space: nowrap; }
+  .entry-btns  { display: flex; gap: .25rem; }
+  .entry-btns button { padding: .2rem .5rem; font-size: .72rem; }
+  .entry-btns button.del { color: #ff7b72; border-color: #6e1a19; }
+  .entry-btns button.del:hover { background: #1a0a0a; }
+  .chevron { font-size: .65rem; color: #484f58; transition: transform .15s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .entry-body {
+    display: none;
+    padding: .75rem;
+    border-top: 1px solid #21262d;
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .entry-body.open { display: flex; }
+
+  .field-label { font-size: .65rem; color: #484f58; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+  .field-value { font-size: .82rem; color: #c9d1d9; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+  .mitre-badge {
+    display: inline-block;
+    font-size: .7rem;
+    padding: 2px 7px;
+    margin: 2px 3px 2px 0;
+    border: 1px solid #1f6feb;
+    border-radius: 4px;
+    color: #79c0ff;
+    background: #0d1f3c;
+  }
+
+  /* empty */
+  .empty { text-align: center; padding: 3rem 1rem; color: #484f58; font-size: .85rem; }
+
+  /* modal overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 50;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid #21262d;
+  }
+  .modal-head h2 { font-size: .9rem; color: #e6edf3; font-weight: normal; }
+  .modal-body { padding: 1rem; display: flex; flex-direction: column; gap: .85rem; }
+  .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid #21262d;
+  }
+
+  .form-row { display: flex; flex-direction: column; gap: .3rem; }
+  .form-row label { font-size: .7rem; color: #8b949e; text-transform: uppercase; letter-spacing: .05em; }
+  .form-row label .req { color: #ff7b72; }
+  .form-row input[type=text],
+  .form-row textarea,
+  .form-row select {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: .45rem .6rem;
+    font-family: inherit;
+    font-size: .82rem;
+    border-radius: 4px;
+    resize: vertical;
+    width: 100%;
+  }
+  .form-row input:focus,
+  .form-row textarea:focus,
+  .form-row select:focus { outline: none; border-color: #58a6ff; }
+  .hint { font-size: .68rem; color: #484f58; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>&#x25A0; MY PLAYBOOK</h1>
+    <span id="save-status">session only — export to keep</span>
+  </header>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="search entries…" oninput="render()">
+    <select id="filterTag" onchange="render()">
+      <option value="">all</option>
+      <option>Concept</option><option>Tool</option><option>Protocol</option>
+      <option>Attack</option><option>Defense</option><option>Framework</option>
+      <option>Incident</option><option>Note</option>
+    </select>
+    <button onclick="openModal()">+ new entry</button>
+    <button onclick="openExportModal()">export ▾</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div id="list"></div>
+
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">new entry</h2>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>title <span class="req">*</span></label>
+        <input type="text" id="f-title" placeholder="e.g. XDR, Lateral Movement, Splunk…">
+      </div>
+      <div class="form-row">
+        <label>category</label>
+        <select id="f-tag">
+          <option>Concept</option><option>Tool</option><option>Protocol</option>
+          <option>Attack</option><option>Defense</option><option>Framework</option>
+          <option>Incident</option><option>Note</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>purpose / meaning</label>
+        <textarea id="f-purpose" rows="2" placeholder="What is this? What problem does it solve?"></textarea>
+      </div>
+      <div class="form-row">
+        <label>description</label>
+        <textarea id="f-description" rows="3" placeholder="Explain in your own words…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>how it works</label>
+        <textarea id="f-how" rows="3" placeholder="Mechanism, flow, step-by-step…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>why it matters (SOC context)</label>
+        <textarea id="f-why" rows="2" placeholder="Relevance to blue team / analyst work…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>MITRE ATT&CK techniques</label>
+        <input type="text" id="f-mitre" placeholder="T1059, T1078.002 (comma separated)">
+        <span class="hint">separate multiple with commas</span>
+      </div>
+      <div class="form-row">
+        <label>related tools / tech</label>
+        <input type="text" id="f-tools" placeholder="Splunk, CrowdStrike, Wireshark…">
+      </div>
+      <div class="form-row">
+        <label>personal notes</label>
+        <textarea id="f-notes" rows="2" placeholder="Anything else to remember…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="closeModal()">cancel</button>
+      <button class="primary" onclick="saveEntry()">save entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- export modal -->
+<div class="overlay" id="exportOverlay" onclick="exportOverlayClick(event)">
+  <div class="modal" id="exportModal" style="max-width:420px">
+    <div class="modal-head">
+      <h2>export</h2>
+      <button onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>scope</label>
+        <select id="exp-scope">
+          <option value="all">all entries</option>
+          <option value="filtered">current filtered view</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <button onclick="doExport('html')">&lt;/&gt; html</button>
+        <button onclick="doExport('pdf')">▤ pdf</button>
+        <button onclick="doExport('word')">W word (.doc)</button>
+        <button onclick="doExport('txt')">≡ plain text</button>
+      </div>
+      <span class="hint">pdf opens your browser's print dialog — choose "save as pdf". the word file also opens cleanly in google docs (file → open → upload).</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let entries = [], editId = null;
+
+function load() {
+  // session-only: always start fresh
+  entries = [];
+}
+function save() {
+  // intentionally no-op: data lives in memory only for this session
+  document.getElementById('save-status').textContent = 'session only — resets on close';
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function fmtDate(ts) { return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderStats() {
+  const cats = {};
+  entries.forEach(e => { cats[e.tag] = (cats[e.tag]||0)+1; });
+  const parts = [`<span class="stat"><b>${entries.length}</b> total</span>`];
+  Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([t,n]) => {
+    parts.push(`<span class="stat"><b>${n}</b> ${t.toLowerCase()}</span>`);
+  });
+  document.getElementById('stats').innerHTML = parts.join('');
+}
+
+function getFilteredList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const ft = document.getElementById('filterTag').value;
+  return entries.filter(e => {
+    const hay = [e.title,e.purpose,e.description,e.how,e.why,e.mitre,e.tools,e.notes].join(' ').toLowerCase();
+    return (!q || hay.includes(q)) && (!ft || e.tag === ft);
+  }).slice().reverse();
+}
+
+function render() {
+  renderStats();
+  const list = getFilteredList();
+
+  const el = document.getElementById('list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">${entries.length ? 'no results.' : 'no entries yet. hit <b>+ new entry</b> to start.'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(e => cardHTML(e)).join('');
+}
+
+function cardHTML(e) {
+  const tagClass = 'tag-' + (e.tag||'note').toLowerCase();
+  const sections = [];
+  if (e.purpose)      sections.push(`<div><div class="field-label">purpose / meaning</div><div class="field-value">${esc(e.purpose)}</div></div>`);
+  if (e.description)  sections.push(`<div><div class="field-label">description</div><div class="field-value">${esc(e.description)}</div></div>`);
+  if (e.how)          sections.push(`<div><div class="field-label">how it works</div><div class="field-value">${esc(e.how)}</div></div>`);
+  if (e.why)          sections.push(`<div><div class="field-label">why it matters (soc)</div><div class="field-value">${esc(e.why)}</div></div>`);
+  if (e.mitre) {
+    const badges = e.mitre.split(',').map(m=>m.trim()).filter(Boolean).map(m=>`<span class="mitre-badge">${esc(m)}</span>`).join('');
+    sections.push(`<div><div class="field-label">mitre att&ck</div><div style="margin-top:4px">${badges}</div></div>`);
+  }
+  if (e.tools)  sections.push(`<div><div class="field-label">related tools</div><div class="field-value">${esc(e.tools)}</div></div>`);
+  if (e.notes)  sections.push(`<div><div class="field-label">personal notes</div><div class="field-value">${esc(e.notes)}</div></div>`);
+
+  return `<div class="entry" id="card-${e.id}">
+    <div class="entry-head" onclick="toggle('${e.id}')">
+      <span class="tag ${tagClass}">${e.tag}</span>
+      <span class="entry-title">${esc(e.title)}</span>
+      <span class="entry-date">${fmtDate(e.ts)}</span>
+      <div class="entry-btns" onclick="event.stopPropagation()">
+        <button onclick="openModal('${e.id}')">edit</button>
+        <button class="del" onclick="del('${e.id}')">del</button>
+      </div>
+      <span class="chevron" id="chev-${e.id}">▼</span>
+    </div>
+    <div class="entry-body" id="body-${e.id}">${sections.join('') || '<span style="color:#484f58;font-size:.8rem">no details added.</span>'}</div>
+  </div>`;
+}
+
+function toggle(id) {
+  document.getElementById('body-'+id).classList.toggle('open');
+  document.getElementById('chev-'+id).classList.toggle('open');
+}
+
+function del(id) {
+  if (!confirm('delete this entry?')) return;
+  entries = entries.filter(e => e.id !== id);
+  save(); render();
+}
+
+function openModal(id) {
+  editId = id || null;
+  const e = id ? entries.find(x => x.id === id) : {};
+  document.getElementById('modal-title').textContent = id ? 'edit entry' : 'new entry';
+  document.getElementById('f-title').value       = e.title || '';
+  document.getElementById('f-tag').value         = e.tag || 'Concept';
+  document.getElementById('f-purpose').value     = e.purpose || '';
+  document.getElementById('f-description').value = e.description || '';
+  document.getElementById('f-how').value         = e.how || '';
+  document.getElementById('f-why').value         = e.why || '';
+  document.getElementById('f-mitre').value       = e.mitre || '';
+  document.getElementById('f-tools').value       = e.tools || '';
+  document.getElementById('f-notes').value       = e.notes || '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('f-title').focus();
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editId = null; }
+function overlayClick(ev) { if (ev.target.id === 'overlay') closeModal(); }
+
+function saveEntry() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('title is required.'); return; }
+  const data = {
+    id:          editId || uid(),
+    title,
+    tag:         document.getElementById('f-tag').value,
+    purpose:     document.getElementById('f-purpose').value.trim(),
+    description: document.getElementById('f-description').value.trim(),
+    how:         document.getElementById('f-how').value.trim(),
+    why:         document.getElementById('f-why').value.trim(),
+    mitre:       document.getElementById('f-mitre').value.trim(),
+    tools:       document.getElementById('f-tools').value.trim(),
+    notes:       document.getElementById('f-notes').value.trim(),
+    ts:          editId ? (entries.find(e=>e.id===editId)||{}).ts||Date.now() : Date.now()
+  };
+  if (editId) { entries = entries.map(e => e.id === editId ? data : e); }
+  else { entries.push(data); }
+  save(); closeModal(); render();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeExportModal(); } });
+
+/* ---- export engine ---- */
+function openExportModal() {
+  if (!entries.length) { alert('no entries yet — add one first.'); return; }
+  document.getElementById('exportOverlay').classList.add('open');
+}
+function closeExportModal() { document.getElementById('exportOverlay').classList.remove('open'); }
+function exportOverlayClick(ev) { if (ev.target.id === 'exportOverlay') closeExportModal(); }
+
+function buildReportHTML(list) {
+  const rows = list.map(e => {
+    const tagClass = 'tag-' + (e.tag||'note').toLowerCase();
+    const fields = [
+      ['purpose / meaning', e.purpose], ['description', e.description],
+      ['how it works', e.how], ['why it matters (soc)', e.why],
+      ['mitre att&ck', e.mitre], ['related tools', e.tools], ['personal notes', e.notes]
+    ].filter(f=>f[1]).map(([l,v]) => {
+      if (l === 'mitre att&ck') {
+        const badges = v.split(',').map(m=>`<span class="mb">${esc(m.trim())}</span>`).join('');
+        return `<div class="field"><div class="fl">${l}</div><div>${badges}</div></div>`;
+      }
+      return `<div class="field"><div class="fl">${l}</div><div class="fv">${esc(v)}</div></div>`;
+    }).join('');
+    return `<details><summary><span class="tag ${tagClass}">${e.tag}</span><span class="t">${esc(e.title)}</span><span class="d">${fmtDate(e.ts)}</span></summary><div class="bd">${fields}</div></details>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Playbook</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;background:#0d0d0d;color:#c9d1d9;padding:2rem 1rem;max-width:780px;margin:0 auto}
+h1{font-size:1.1rem;color:#e6edf3;letter-spacing:.05em;border-bottom:1px solid #21262d;padding-bottom:.75rem;margin-bottom:1.5rem}
+details{border:1px solid #21262d;border-radius:6px;margin-bottom:.6rem;overflow:hidden;background:#0d1117}
+summary{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;cursor:pointer;list-style:none}
+summary:hover{background:#161b22}
+summary::-webkit-details-marker{display:none}
+.t{flex:1;font-size:.88rem;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d{font-size:.7rem;color:#484f58;white-space:nowrap}
+.tag{font-size:.65rem;padding:2px 7px;border-radius:20px;border:1px solid;white-space:nowrap;font-weight:bold;letter-spacing:.04em;text-transform:uppercase}
+.tag-concept{color:#79c0ff;border-color:#1f6feb}
+.tag-tool{color:#7ee787;border-color:#238636}
+.tag-protocol{color:#d2a8ff;border-color:#6e40c9}
+.tag-attack{color:#ff7b72;border-color:#b62324}
+.tag-defense{color:#56d364;border-color:#196c2e}
+.tag-framework{color:#ffa657;border-color:#9e6a03}
+.tag-incident{color:#f85149;border-color:#6e1a19}
+.tag-note{color:#8b949e;border-color:#30363d}
+.bd{padding:.75rem;border-top:1px solid #21262d;display:flex;flex-direction:column;gap:.6rem}
+.field{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:.65rem;color:#484f58;text-transform:uppercase;letter-spacing:.06em}
+.fv{font-size:.82rem;color:#c9d1d9;line-height:1.6;white-space:pre-wrap}
+.mb{display:inline-block;font-size:.7rem;padding:2px 7px;margin:2px 3px 2px 0;border:1px solid #1f6feb;border-radius:4px;color:#79c0ff;background:#0d1f3c}
+@media print{
+  body{background:#fff;color:#111}
+  h1{color:#111;border-color:#ccc}
+  details{background:#fff;border-color:#ccc}
+  summary:hover{background:#f2f2f2}
+  .t{color:#111}
+  .d,.fl{color:#555}
+  .fv{color:#111}
+  .bd{border-color:#ccc}
+}
+</style></head><body>
+<h1>&#x25A0; MY PLAYBOOK &mdash; exported ${new Date().toLocaleString()} &mdash; ${list.length} entries</h1>
+${rows || '<div style="color:#484f58;font-size:.85rem">no entries.</div>'}
+</body></html>`;
+}
+
+function buildText(list) {
+  const lines = ['MY PLAYBOOK — EXPORT', 'Generated: ' + new Date().toLocaleString(), '='.repeat(60)];
+  list.forEach(e => {
+    lines.push('');
+    lines.push('[' + (e.tag||'NOTE').toUpperCase() + '] ' + e.title + '  (' + fmtDate(e.ts) + ')');
+    lines.push('-'.repeat(40));
+    if (e.purpose)     { lines.push('Purpose / Meaning:');    lines.push('  ' + e.purpose); }
+    if (e.description) { lines.push('Description:');          lines.push('  ' + e.description); }
+    if (e.how)          { lines.push('How It Works:');         lines.push('  ' + e.how); }
+    if (e.why)          { lines.push('Why It Matters (SOC):'); lines.push('  ' + e.why); }
+    if (e.mitre)        lines.push('MITRE ATT&CK: ' + e.mitre);
+    if (e.tools)        lines.push('Related Tools: ' + e.tools);
+    if (e.notes)        { lines.push('Personal Notes:'); lines.push('  ' + e.notes); }
+  });
+  return lines.join('\n');
+}
+
+function buildWordHTML(list) {
+  const tagColors = { concept:'#1f6feb', tool:'#238636', protocol:'#6e40c9', attack:'#b62324', defense:'#196c2e', framework:'#9e6a03', incident:'#6e1a19', note:'#30363d' };
+  const body = list.map(e => {
+    const col = tagColors[(e.tag||'note').toLowerCase()] || '#333';
+    const fields = [
+      ['Purpose / Meaning', e.purpose], ['Description', e.description],
+      ['How It Works', e.how], ['Why It Matters (SOC)', e.why],
+      ['MITRE ATT&CK', e.mitre], ['Related Tools', e.tools], ['Personal Notes', e.notes]
+    ].filter(f=>f[1]).map(([l,v]) =>
+      '<div style="margin-bottom:8px;"><div style="font-family:Calibri,sans-serif;font-size:8.5pt;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">' + l + '</div><div style="font-family:Calibri,sans-serif;font-size:10.5pt;white-space:pre-wrap;">' + esc(v) + '</div></div>'
+    ).join('');
+    return '<div style="border:1px solid #ddd;border-radius:6px;padding:12px 14px;margin-bottom:12px;">' +
+      '<div style="margin-bottom:8px;"><span style="font-family:Consolas,monospace;font-size:8pt;color:' + col + ';border:1px solid ' + col + ';border-radius:10px;padding:2px 8px;text-transform:uppercase;margin-right:8px;">' + esc(e.tag) + '</span>' +
+      '<b style="font-family:Calibri,sans-serif;font-size:12pt;">' + esc(e.title) + '</b>' +
+      '<span style="font-family:Calibri,sans-serif;font-size:9pt;color:#888;float:right;">' + fmtDate(e.ts) + '</span></div>' +
+      fields +
+    '</div>';
+  }).join('');
+
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="UTF-8"><title>My Playbook Export</title></head><body>' +
+    '<h1 style="font-family:Consolas,monospace;font-size:18pt;">■ MY PLAYBOOK</h1>' +
+    '<div style="font-family:Calibri,sans-serif;font-size:9.5pt;color:#666;margin-bottom:16px;">Export — ' + new Date().toLocaleString() + ' — ' + list.length + ' entries</div>' +
+    (body || '<div style="font-family:Calibri,sans-serif;font-size:10pt;color:#999;">No entries.</div>') +
+    '</body></html>';
+}
+
+function exportPdf(list) {
+  const html = buildReportHTML(list);
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0'; iframe.style.bottom = '0';
+  iframe.style.width = '0'; iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1000);
+  }, 350);
+}
+
+function doExport(fmt) {
+  const scope = document.getElementById('exp-scope').value;
+  const list = scope === 'filtered' ? getFilteredList() : entries.slice().reverse();
+  if (!list.length) { alert('no entries to export.'); return; }
+  const stamp = new Date().toISOString().slice(0,10);
+  if (fmt === 'html')      dl(buildReportHTML(list), 'playbook_' + stamp + '.html', 'text/html');
+  else if (fmt === 'txt')  dl(buildText(list), 'playbook_' + stamp + '.txt', 'text/plain');
+  else if (fmt === 'word') dl(buildWordHTML(list), 'playbook_' + stamp + '.doc', 'application/msword');
+  else if (fmt === 'pdf')  { exportPdf(list); closeExportModal(); return; }
+  closeExportModal();
+}
+
+function dl(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = filename;
+  a.click();
+}
+
+load(); render();
+</script>
+</body>
+</html>
