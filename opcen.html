@@ -344,7 +344,7 @@ function weatherCodeToText(code){
 async function fetchFeed(url){
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     
     const res = await fetch(RSS_PROXY + encodeURIComponent(url), { signal: controller.signal });
     clearTimeout(timeoutId);
@@ -406,11 +406,20 @@ async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
 async function loadWeather(lat, lon, locName){
   const body = document.getElementById('weather-body');
   try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,humidity,rain,weather_code&daily=weather_code,apparent_temperature_max,sunrise,sunset,rain_sum,precipitation_sum&timezone=auto`;
+    const params = new URLSearchParams({
+      latitude: lat,
+      longitude: lon,
+      current: 'temperature_2m,apparent_temperature,humidity,rain,weather_code',
+      daily: 'weather_code,apparent_temperature_max,sunrise,sunset,rain_sum,precipitation_sum',
+      timezone: 'auto'
+    });
+    
+    const url = 'https://api.open-meteo.com/v1/forecast?' + params.toString();
     const res = await fetch(url);
     const data = await res.json();
     const cur = data.current;
     const daily = data.daily;
+    
     markLive('panel-weather');
     body.innerHTML = `
       <div class="weather-loc">${escapeHtml(locName)}</div>
