@@ -416,59 +416,101 @@ async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
 }
 
 /* ---------- WEATHER MAP ---------- */
-async function loadWeatherMap(lat, lon, locName){
+// Variable to hold map instance globally
+let weatherMap = null;
+
+// Helper function to pull live data from Open-Meteo
+async function fetchOpenMeteoData(lat, lon) {
+  // Using Open-Meteo for detailed forecast metrics
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m&hourly=precipitation_probability&timezone=auto`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Meteo API response not OK');
+    return await res.json();
+  } catch (err) {
+    console.error('Failed to fetch Open-Meteo metrics:', err);
+    return null;
+  }
+}
+
+async function loadWeatherMap(lat, lon, locName) {
   const body = document.getElementById('weather-body');
-  try{
-    // Destroy old map if exists
+  try {
+    // Destroy old map instance if it already exists
     if (weatherMap) {
       weatherMap.remove();
       weatherMap = null;
     }
     
-    // Create map container
+    // Create container element
     body.innerHTML = '<div id="leaflet-map" style="width:100%;height:100%;"></div>';
     
-    // Initialize Leaflet map
+    // Initialize Leaflet map instance
     weatherMap = L.map('leaflet-map', {
       zoomControl: true,
       attributionControl: true
-    }).setView([lat, lon], 6);
+    }).setView([lat, lon], 7);
     
-    // Base layer
-   // CartoDB Voyager (Colored, English/Latin labels)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-}).addTo(weatherMap);
+    // 1. Base Layer: CartoDB Voyager
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(weatherMap);
+
+    // 2. Weather Overlay Layer: RainViewer (No key required, live radar/rain)
+    try {
+      const radarRes = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+      const radarData = await radarRes.json();
+      if (radarData && radarData.radar && radarData.radar.past) {
+        const latestPath = radarData.radar.past[radarData.radar.past.length - 1].path;
+        
+        L.tileLayer(`https://tilecache.rainviewer.com${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, {
+          opacity: 0.65,
+          maxZoom: 18,
+          attribution: '&copy; <a href="https://www.rainviewer.com/">RainViewer</a>'
+        }).addTo(weatherMap);
+      }
+    } catch (radarErr) {
+      console.warn('Could not load radar overlay tiles:', radarErr);
+    }
     
-    // Weather layer - OpenWeatherMap Rain
-    // CartoDB Voyager (Colored, English/Latin labels)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-}).addTo(weatherMap);
-    
-    // Add marker for location
+    // 3. Fetch current location weather metrics from Open-Meteo
+    const meteoData = await fetchOpenMeteoData(lat, lon);
+    const temp = meteoData?.current?.temperature_2m ?? 'N/A';
+    const wind = meteoData?.current?.wind_speed_10m ?? 'N/A';
+    const humidity = meteoData?.current?.relative_humidity_2m ?? 'N/A';
+    const rain = meteoData?.current?.precipitation ?? 0;
+
+    // 4. Marker with Popup Details
+    const popupContent = `
+      <div style="font-family: sans-serif; min-width: 130px;">
+        <b style="font-size:1.1em;">${escapeHtml(locName)}</b><hr style="margin:4px 0;">
+        Temp: <b>${temp}°C</b><br>
+        Wind: <b>${wind} km/h</b><br>
+        Humidity: <b>${humidity}%</b><br>
+        Rain: <b>${rain} mm</b>
+      </div>
+    `;
+
     L.circleMarker([lat, lon], {
       radius: 8,
       fillColor: '#4fc3d9',
-      color: '#4fc3d9',
+      color: '#ffffff',
       weight: 2,
       opacity: 1,
-      fillOpacity: 0.8
-    }).addTo(weatherMap).bindPopup(`<b>${escapeHtml(locName)}</b>`);
+      fillOpacity: 0.9
+    }).addTo(weatherMap).bindPopup(popupContent).openPopup();
     
     markLive('panel-weather');
-  } catch(e){
+  } catch(e) {
     console.error('Weather map error:', e);
     body.innerHTML = '<div class="error">MAP INITIALIZATION ERROR</div>';
   }
 }
 
-function initWeather(){
-  if (navigator.geolocation){
+function initWeather() {
+  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => loadWeatherMap(pos.coords.latitude, pos.coords.longitude, 'Current location'),
       () => loadWeatherMap(FALLBACK_LOC.lat, FALLBACK_LOC.lon, FALLBACK_LOC.name),
@@ -479,6 +521,8 @@ function initWeather(){
   }
 }
 
+
+  
 /* ---------- EARTHQUAKES (USGS, no key, CORS-friendly) merged into crisis panel ---------- */
 async function loadEarthquakes(){
   try{
