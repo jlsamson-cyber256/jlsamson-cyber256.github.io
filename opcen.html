@@ -3,122 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.cdnfonts.com; img-src 'self' data: https: https://unpkg.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://*.tile.openweathermap.org https://tile.openweathermap.org; font-src 'self' data: https://fonts.cdnfonts.com; connect-src 'self' https://static.cloudflareinsights.com https://api.open-meteo.com https://api.rss2json.com https://earthquake.usgs.gov https://*.tile.openstreetmap.org https://*.tile.openweathermap.org https://tile.openweathermap.org https://unpkg.com https://*.basemaps.cartocdn.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://static.cloudflareinsights.com https://api.open-meteo.com https://api.rss2json.com https://earthquake.usgs.gov https://api.rainviewer.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://tilecache.rainviewer.com;">
 <title>OPCEN // Operations Center</title>
-
-<style type="text/css">@font-face {font-family:SF Pro Display;font-style:normal;font-weight:400;src:url(https://fonts.cdnfonts.com/css/sf-mono);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+1EA0-1EF9,U+20AB;font-display:swap}@font-face {font-family:Space Grotesk;font-style:normal;font-weight:400;src:url(/cf-fonts/v/space-grotesk/5.2.10/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1F15,U+1F18-1F1D,U+1F20-1F45,U+1F48-1F4D,U+1F50-1F57,U+1F59,U+1F5B,U+1F5D,U+1F5F-1F7D,U+1F80-1FB4,U+1FB6-1FC4,U+1FC6-1FD3,U+1FD6-1FDB,U+1FDD-1FEF,U+1FF2-1FF4,U+1FF6-1FFE,U+2126;font-display:swap}@font-face {font-family:Space Grotesk;font-style:normal;font-weight:400;src:url(/cf-fonts/v/space-grotesk/5.2.10/greek/wght/normal.woff2);unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03E1,U+03F0-03FF;font-display:swap}@font-face {font-family:Space Grotesk;font-style:normal;font-weight:400;src:url(/cf-fonts/v/space-grotesk/5.2.10/latin-ext/wght/normal.woff2);unicode-range:U+0100-012E,U+0130-0136,U+0138,U+0139-0147,U+0149-0176,U+0178-0179,U+017B-0182,U+0184,U+0186-0187,U+0189-018A,U+018C-0192,U+0194,U+0196-0198,U+019B-019B,U+019D-019E,U+01A0-01A2,U+01A4,U+01A6-01A7,U+01A9,U+01AC-01B0,U+01B2-01B3,U+01B5,U+01B6-01B9,U+01BB,U+01BC-01BF,U+01C0-01C3,U+01C4-01CC,U+01CD-01CF,U+01D0-01D3,U+01D4-01D5,U+01D6-01D7,U+01D8-01D9,U+01DA-01DB,U+01DC-01DD,U+01DE-01DF,U+01E0-01E1,U+01E2-01E3,U+01E4-01E5,U+01E6-01E7,U+01E8-01E9,U+01EA-01EB,U+01EC-01ED,U+01EE-01EF,U+01F0,U+01F4-01F5,U+01F6-01F8,U+01F9,U+01FA-01FB,U+01FC-01FD,U+01FE-01FF,U+0200-0201,U+0202-0203,U+0204-0205,U+0206-0207,U+0208-0209,U+020A-020B,U+020C-020D,U+020E-020F,U+0210-0211,U+0212-0213,U+0214-0215,U+0216-0217,U+0218-0219,U+021A-021B,U+021C-021D,U+021E-021F,U+0220,U+0221,U+0222-0223,U+0224-0225,U+0226-0227,U+0228-0229,U+022A-022B,U+022C-022D,U+022E-022F,U+0230-0231,U+0232-0233,U+0234-0235,U+0236-0237,U+0238-0239,U+023A,U+023B-023C,U+023D,U+023E,U+023F-0240,U+0241-0242,U+0243,U+0244-0245,U+0246-0247,U+0248-0249,U+024A-024B,U+024C-024D,U+024E-024F,U+0250-0251,U+0252-0253,U+0254-0255,U+0256-0257,U+0258-0259,U+025A,U+025B-025C,U+025D,U+025E,U+025F-0260,U+0261-0262,U+0263,U+0264-0265,U+0266-0267,U+0268,U+0269-026A,U+026B,U+026C,U+026D,U+026E,U+026F-0270,U+0271-0272,U+0273,U+0274,U+0275,U+0276-0277,U+0278,U+0279-027A,U+027B-027C,U+027D,U+027E,U+027F,U+0280-0281,U+0282,U+0283,U+0284,U+0285,U+0286,U+0287,U+0288,U+0289,U+028A-028B,U+028C,U+028D,U+028E-028F,U+0290-0291,U+0292,U+0293,U+0294,U+0295-0296,U+0297,U+0298,U+0299,U+029A,U+029B,U+029C,U+029D,U+029E,U+029F,U+02A0,U+02A1-02A2,U+02A3-02A4,U+02A5-02A6,U+02A7-02A8,U+02A9-02AA,U+02AB-02AC,U+02AD,U+02AE,U+02AF,U+02B0-02B8,U+02BB-02C1,U+02D0,U+02D1,U+02E0-02E4,U+02E5-02E9,U+02EC,U+02EE,U+0371-0372,U+0373-0374,U+0376-0377,U+037B-037D,U+0390,U+03AC-03CE,U+03D0-03D6,U+03D8-03D9,U+03DA,U+03DB,U+03DC,U+03DD,U+03DE,U+03DF,U+03E0-03E1,U+03E2-03E3,U+03E4-03E5,U+03E6-03E7,U+03E8-03E9,U+03EA-03EB,U+03EC-03ED,U+03EE-03EF,U+03F3,U+03F4-03F5,U+03F6,U+03F7-03F8,U+03F9,U+03FA-03FB,U+03FC-03FD,U+03FE-03FF,U+0410-0451,U+0452-0475,U+0490-0491,U+0492-0493,U+0494-0495,U+0496-0497,U+0498-0499,U+049A-049B,U+049C-049D,U+049E-049F,U+04A0-04A1,U+04A2-04A3,U+04A4-04A5,U+04A6-04A7,U+04A8-04A9,U+04AA-04AB,U+04AC-04AD,U+04AE-04AF,U+04B0-04B1,U+04B2-04B3,U+04B4-04B5,U+04B6-04B7,U+04B8-04B9,U+04BA,U+04BB,U+04BC-04BD,U+04BE,U+04BF,U+04C0,U+04C1-04C2,U+04C3-04C4,U+04C5-04C6,U+04C7-04C8,U+04C9-04CA,U+04CB-04CC,U+04CD,U+04CE-04CF,U+04D0-04D1,U+04D2-04D3,U+04D4-04D5,U+04D6-04D7,U+04D8-04D9,U+04DA-04DB,U+04DC-04DD,U+04DE-04DF,U+04E0-04E1,U+04E2-04E3,U+04E4-04E5,U+04E6-04E7,U+04E8-04E9,U+04EA-04EB,U+04EC-04ED,U+04EE-04EF,U+04F0-04F1,U+04F2-04F3,U+04F4-04F5,U+04F6-04F7,U+04F8-04F9,U+04FA-04FB,U+04FC-04FD,U+04FE-04FF,U+0500-0501,U+0502-0503,U+0504-0505,U+0506-0507,U+0508-0509,U+050A-050B,U+050C-050D,U+050E-050F,U+0510-0511,U+0512-0513,U+0514-0515,U+0516-0517,U+0518-0519,U+051A-051B,U+051C-051D,U+051E-051F,U+0520-0521,U+0522-0523,U+0524-0525,U+0526-0527,U+0528-0529,U+052A-052B,U+052C-052D,U+052E-052F,U+0531-0556,U+0559,U+0560-0588,U+05D0-05EA,U+05EF-05F3,U+0620-063F,U+0641-064A,U+064B-0655,U+0660-0669,U+066E-066F,U+0671-0674,U+0679-0687,U+0688-0699,U+069A-06A3,U+06A5-06A6,U+06AA-06AD,U+06AF-06B9,U+06BA,U+06BB-06BE,U+06BF,U+06C1-06C2,U+06C3-06C4,U+06C5-06C6,U+06C7-06C8,U+06C9,U+06CA,U+06CB,U+06CC-06CD,U+06CE,U+06D2-06D3,U+06D5,U+06E5-06E6,U+06E9,U+06EE-06EF,U+06FA-06FC,U+06FF,U+0710,U+0712-0714,U+0715-0717,U+0718-0719,U+0720,U+0721-0725,U+0726-0727,U+0728-0729,U+072A,U+072B-0732,U+0733-0734,U+0735-0736,U+0737-0738,U+0739-0739,U+073A,U+073B-073C,U+073D-073E,U+073F-0741,U+0742-0743,U+0745-0746,U+0747-0748,U+0749-074A,U+074D,U+074E-074F,U+0750-077F,U+0780-0782,U+0783-0788,U+0789-0789,U+078A-0791,U+0793-0795,U+0798-079F,U+07A1-07A2,U+07A3-07A4,U+07A5-07A6,U+07A7-07A8,U+07A9-07AA,U+07AB-07B0,U+07B2-07BF,U+07C0-07B1,U+07C2-07C4,U+07C7-07CA,U+07CB-07EA,U+07F4-07F5,U+07FA,U+07FE-07FF;font-display:swap}@font-face {font-family:Space Grotesk;font-style:normal;font-weight:400;src:url(/cf-fonts/v/space-grotesk/5.2.10/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+2000-200A,U+2070,U+20B7,U+20A0-20CF,U+2113,U+2C60-2C7F,U+A720-A721,U+FB01-FB02,U+FB1C-FB28,U+3099-309C;font-display:swap}</style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root{
-    --bg:#0a0e13;
-    --panel:#10161e;
-    --panel-raised:#141c26;
-    --hair:#1e2a37;
-    --hair-bright:#2c3d4d;
-    --text:#dbe4ea;
-    --dim:#6c7f91;
-    --dimmer:#465563;
-    --c-weather:#4fc3d9;
-    --c-news:#8b93f0;
-    --c-crisis:#e8935a;
-    --c-security:#5fd98a;
-    --c-cyber:#c77fd9;
-    --alert:#e05a5a;
+    --bg:#0a0e13; --panel:#10161e; --panel-raised:#141c26;
+    --hair:#1e2a37; --hair-bright:#2c3d4d;
+    --text:#dbe4ea; --dim:#6c7f91; --dimmer:#465563;
+    --c-weather:#4fc3d9; --c-news:#8b93f0; --c-crisis:#e8935a;
+    --c-security:#5fd98a; --c-cyber:#c77fd9; --alert:#e05a5a;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'IBM Plex Mono', monospace;
-    min-height:100vh;
-  }
-  body{
-    background-image:
+  html,body{ background:var(--bg); color:var(--text); font-family:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace; min-height:100vh; }
+  body{ background-image:
       radial-gradient(ellipse at top left, rgba(79,195,217,0.04), transparent 50%),
-      radial-gradient(ellipse at bottom right, rgba(199,127,217,0.04), transparent 50%);
-  }
+      radial-gradient(ellipse at bottom right, rgba(199,127,217,0.04), transparent 50%); }
   ::selection{ background:var(--c-security); color:#08110a; }
   a{ color:inherit; text-decoration:none; }
 
-  /* ===== TOP BAR ===== */
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:14px 24px;
-    border-bottom:1px solid var(--hair);
-    background:var(--panel);
-  }
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .brand .dot{
-    width:9px; height:9px; border-radius:50%;
-    background:var(--c-security);
-    box-shadow:0 0 8px var(--c-security);
-    animation:pulse 2.4s ease-in-out infinite;
-  }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:1px solid var(--hair); background:var(--panel); flex-wrap:wrap; gap:8px; }
+  .brand{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--c-security); box-shadow:0 0 8px var(--c-security); animation:pulse 2.4s ease-in-out infinite; }
   @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
-  .brand h1{
-    font-family:'Space Grotesk', sans-serif;
-    font-weight:700;
-    font-size:16px;
-    letter-spacing:2px;
-    color:var(--text);
-  }
+  .brand h1{ font-family:'Space Grotesk', 'Segoe UI', sans-serif; font-weight:700; font-size:16px; letter-spacing:2px; }
   .brand span{ color:var(--dim); font-weight:500; font-size:12px; letter-spacing:1px; }
   .clockbox{ text-align:right; }
   .clockbox .time{ font-size:15px; font-weight:600; letter-spacing:1px; }
-  .clockbox .date{ font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:2px;}
+  .clockbox .date{ font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:2px; }
 
-  /* ===== TICKER ===== */
-  .ticker-wrap{
-    background:#0d1218;
-    border-bottom:1px solid var(--hair);
-    overflow:hidden;
-    white-space:nowrap;
-    padding:8px 0;
-    position:relative;
-  }
-  .ticker-wrap::before{
-    content:'LIVE FEED'; position:absolute; left:0; top:0; bottom:0;
-    background:var(--bg); color:var(--c-security);
-    font-size:10px; font-weight:600; letter-spacing:2px;
-    display:flex; align-items:center; padding:0 12px;
-    border-right:1px solid var(--hair); z-index:2;
-  }
-  .ticker-track{
-    display:inline-block;
-    padding-left:110px;
-    animation:scroll 90s linear infinite;
-    font-size:12px;
-    color:var(--dim);
-  }
+  .ticker-wrap{ background:#0d1218; border-bottom:1px solid var(--hair); overflow:hidden; white-space:nowrap; padding:8px 0; position:relative; }
+  .ticker-wrap::before{ content:'LIVE FEED'; position:absolute; left:0; top:0; bottom:0; background:var(--bg); color:var(--c-security); font-size:10px; font-weight:600; letter-spacing:2px; display:flex; align-items:center; padding:0 12px; border-right:1px solid var(--hair); z-index:2; }
+  .ticker-track{ display:inline-block; padding-left:110px; animation:scroll 90s linear infinite; font-size:12px; color:var(--dim); }
   .ticker-track span{ margin-right:48px; }
   .ticker-track span b{ color:var(--text); font-weight:500; }
   @keyframes scroll{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
 
-  /* ===== GRID ===== */
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
-    gap:1px;
-    background:var(--hair);
-    border-top:1px solid var(--hair);
-  }
-  .panel{
-    background:var(--panel);
-    display:flex; flex-direction:column;
-    min-height:340px;
-    max-height:480px;
-  }
-  .panel-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 16px;
-    border-bottom:1px solid var(--hair);
-    background:var(--panel-raised);
-  }
-  .panel-head .label{
-    font-family:'Space Grotesk', sans-serif;
-    font-size:12px; font-weight:600; letter-spacing:1.5px;
-    display:flex; align-items:center; gap:8px;
-  }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1px; background:var(--hair); border-top:1px solid var(--hair); }
+  .panel{ background:var(--panel); display:flex; flex-direction:column; min-height:340px; max-height:480px; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--hair); background:var(--panel-raised); }
+  .panel-head .label{ font-family:'Space Grotesk', 'Segoe UI', sans-serif; font-size:12px; font-weight:600; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
   .panel-head .chan{ color:var(--dimmer); font-size:10px; font-weight:500; letter-spacing:1px; }
   .bars{ display:flex; gap:2px; align-items:flex-end; height:14px; }
   .bars i{ width:3px; display:block; border-radius:1px; background:var(--dimmer); }
@@ -126,13 +50,7 @@
   .bars i:nth-child(3){ height:10px; } .bars i:nth-child(4){ height:14px; }
   .panel.live .bars i{ background:currentColor; }
 
-  .panel-body{
-    padding:14px 16px;
-    overflow-y:auto;
-    flex:1;
-    font-size:12.5px;
-    line-height:1.55;
-  }
+  .panel-body{ padding:14px 16px; overflow-y:auto; flex:1; font-size:12.5px; line-height:1.55; position:relative; }
   .panel-body::-webkit-scrollbar{ width:6px; }
   .panel-body::-webkit-scrollbar-thumb{ background:var(--hair-bright); border-radius:3px; }
 
@@ -141,47 +59,32 @@
   .row a.title{ color:var(--text); font-weight:500; display:block; }
   .row a.title:hover{ text-decoration:underline; }
   .row .meta{ color:var(--dim); font-size:10.5px; margin-top:3px; letter-spacing:.3px; }
-  .tag{
-    display:inline-block; font-size:9.5px; font-weight:600; letter-spacing:1px;
-    padding:1px 6px; border-radius:2px; margin-right:6px;
-  }
-
-  .stat-line{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--hair); }
-  .stat-line:last-child{ border-bottom:none; }
-  .stat-line .k{ color:var(--dim); }
-  .stat-line .v{ font-weight:600; }
+  .tag{ display:inline-block; font-size:9.5px; font-weight:600; letter-spacing:1px; padding:1px 6px; border-radius:2px; margin-right:6px; }
 
   .loading{ color:var(--dim); font-size:11px; letter-spacing:1px; }
   .error{ color:var(--alert); font-size:11px; }
 
-  /* channel colors */
   #panel-weather .panel-head, #panel-weather .bars{ color:var(--c-weather); }
   #panel-news .panel-head, #panel-news .bars{ color:var(--c-news); }
   #panel-crisis .panel-head, #panel-crisis .bars{ color:var(--c-crisis); }
   #panel-security .panel-head, #panel-security .bars{ color:var(--c-security); }
   #panel-cyber .panel-head, #panel-cyber .bars{ color:var(--c-cyber); }
 
-  .weather-hero{ display:flex; align-items:baseline; gap:10px; padding:6px 0 14px; }
-  .weather-hero .temp{ font-family:'Space Grotesk', sans-serif; font-size:38px; font-weight:700; }
+  .weather-summary{ padding:0 0 10px; border-bottom:1px solid var(--hair); margin-bottom:10px; }
+  .weather-loc{ font-size:11px; color:var(--dim); letter-spacing:.5px; margin-bottom:6px; }
+  .weather-hero{ display:flex; align-items:baseline; gap:10px; }
+  .weather-hero .temp{ font-family:'Space Grotesk', 'Segoe UI', sans-serif; font-size:34px; font-weight:700; }
   .weather-hero .cond{ color:var(--dim); font-size:12px; }
-  .weather-loc{ font-size:11px; color:var(--dim); letter-spacing:.5px; margin-bottom:4px; }
-
-  /* Weather Map */
-  #weather-map{ width:100%; height:100%; border:none; }
+  .weather-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; margin-top:8px; font-size:11px; }
+  .weather-grid .k{ color:var(--dim); }
+  #weather-map{ width:100%; height:220px; border-radius:4px; overflow:hidden; }
   .leaflet-container{ background:var(--panel); }
   .leaflet-tile{ filter:brightness(0.8) saturate(0.8); }
   .leaflet-control-attribution{ background:transparent !important; color:var(--dim); font-size:9px; }
   .leaflet-control{ background:var(--panel-raised) !important; border:1px solid var(--hair) !important; }
   .leaflet-control a{ color:var(--c-weather); }
-  .leaflet-control-zoom-in, .leaflet-control-zoom-out{ color:var(--text) !important; font-weight:bold; }
 
-  footer{
-    padding:16px 24px 28px;
-    color:var(--dimmer);
-    font-size:10.5px;
-    letter-spacing:.5px;
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
-  }
+  footer{ padding:16px 24px 28px; color:var(--dimmer); font-size:10.5px; letter-spacing:.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 
   @media(max-width:640px){
     .topbar{ flex-direction:column; align-items:flex-start; gap:6px; }
@@ -204,21 +107,16 @@
 </div>
 
 <div class="ticker-wrap">
-  <div class="ticker-track" id="ticker">
-    <span>Initializing feed uplinks…</span>
-  </div>
+  <div class="ticker-track" id="ticker"><span>Initializing feed uplinks…</span></div>
 </div>
 
 <div class="grid">
-
   <div class="panel" id="panel-weather">
     <div class="panel-head">
-      <div class="label"><span class="chan">CH.01</span> ATMOS / WEATHER MAP</div>
+      <div class="label"><span class="chan">CH.01</span> ATMOS / WEATHER</div>
       <div class="bars"><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="panel-body" id="weather-body">
-      <div class="loading">ACQUIRING SIGNAL…</div>
-    </div>
+    <div class="panel-body" id="weather-body"><div class="loading">ACQUIRING SIGNAL…</div></div>
   </div>
 
   <div class="panel" id="panel-crisis">
@@ -226,9 +124,7 @@
       <div class="label"><span class="chan">CH.02</span> DISASTER / CRISIS</div>
       <div class="bars"><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="panel-body" id="crisis-body">
-      <div class="loading">ACQUIRING SIGNAL…</div>
-    </div>
+    <div class="panel-body" id="crisis-body"><div class="loading">ACQUIRING SIGNAL…</div></div>
   </div>
 
   <div class="panel" id="panel-news">
@@ -236,9 +132,7 @@
       <div class="label"><span class="chan">CH.03</span> SITREP / WORLD NEWS</div>
       <div class="bars"><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="panel-body" id="news-body">
-      <div class="loading">ACQUIRING SIGNAL…</div>
-    </div>
+    <div class="panel-body" id="news-body"><div class="loading">ACQUIRING SIGNAL…</div></div>
   </div>
 
   <div class="panel" id="panel-security">
@@ -246,9 +140,7 @@
       <div class="label"><span class="chan">CH.04</span> SECURITY / GEOPOL</div>
       <div class="bars"><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="panel-body" id="security-body">
-      <div class="loading">ACQUIRING SIGNAL…</div>
-    </div>
+    <div class="panel-body" id="security-body"><div class="loading">ACQUIRING SIGNAL…</div></div>
   </div>
 
   <div class="panel" id="panel-cyber">
@@ -256,37 +148,36 @@
       <div class="label"><span class="chan">CH.05</span> CYBERSEC / CVE</div>
       <div class="bars"><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="panel-body" id="cyber-body">
-      <div class="loading">ACQUIRING SIGNAL…</div>
-    </div>
+    <div class="panel-body" id="cyber-body"><div class="loading">ACQUIRING SIGNAL…</div></div>
   </div>
-
 </div>
 
 <footer>
-  <span>OPCEN v1.0 — client-side console, no backend, no login</span>
+  <span>OPCEN v1.1 — client-side console, no backend, no login</span>
   <span id="refresh-note">last full refresh: —</span>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ---------- CLOCK ---------- */
+/* ============ CLOCK ============ */
 function tickClock(){
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
-  document.getElementById('dateline').textContent = now.toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric' }).toUpperCase();
+  document.getElementById('dateline').textContent =
+    now.toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric' }).toUpperCase();
 }
-tickClock(); setInterval(tickClock, 1000);
+tickClock();
+setInterval(tickClock, 1000);
 
-/* ---------- CONFIG ---------- */
+/* ============ CONFIG ============ */
 const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 const FALLBACK_LOC = { lat: 14.5995, lon: 120.9842, name: 'Manila, PH (default)' };
+const FETCH_TIMEOUT_MS = 10000;
 
 const FEEDS = {
   news: [
     { name:'BBC World', url:'http://feeds.bbci.co.uk/news/world/rss.xml' },
     { name:'UN News', url:'https://news.un.org/feed/subscribe/en/news/all/rss.xml' },
-    { name:'BBC UK', url:'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/front_page/rss.xml' },
     { name:'PBS NewsHour', url:'https://www.pbs.org/newshour/feeds/rss/headlines' }
   ],
   crisis: [
@@ -302,215 +193,285 @@ const FEEDS = {
   ]
 };
 
-let tickerItems = [];
-let weatherMap = null;
+// Weather code -> label (WMO codes)
+const WMO = {
+  0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+  45:'Fog',48:'Rime fog',
+  51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',
+  56:'Light freezing drizzle',57:'Dense freezing drizzle',
+  61:'Slight rain',63:'Moderate rain',65:'Heavy rain',
+  66:'Light freezing rain',67:'Heavy freezing rain',
+  71:'Slight snow',73:'Moderate snow',75:'Heavy snow',77:'Snow grains',
+  80:'Slight rain showers',81:'Moderate rain showers',82:'Violent rain showers',
+  85:'Slight snow showers',86:'Heavy snow showers',
+  95:'Thunderstorm',96:'Thunderstorm w/ hail',99:'Thunderstorm w/ heavy hail'
+};
+function wmoText(code){ return WMO[code] || 'Unknown conditions'; }
 
-/* ---------- HELPERS ---------- */
+let tickerItems = [];   // deduped by link
+let seenLinks = new Set();
+let weatherMap = null;
+let weatherMarker = null;
+
+/* ============ HELPERS ============ */
 function timeAgo(dateStr){
   const d = new Date(dateStr);
   if (isNaN(d)) return '';
   const diff = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (diff < 1) return 'just now';
   if (diff < 60) return diff + 'm ago';
   if (diff < 1440) return Math.floor(diff/60) + 'h ago';
   return Math.floor(diff/1440) + 'd ago';
 }
 function escapeHtml(s){
-  return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function markLive(panelId){ document.getElementById(panelId).classList.add('live'); }
 
-// WMO Weather interpretation codes -> human readable text
-function weatherCodeToText(code){
-  const map = {
-    0: 'Clear sky',
-    1: 'Mainly clear',
-    2: 'Partly cloudy',
-    3: 'Overcast',
-    45: 'Fog',
-    48: 'Depositing rime fog',
-    51: 'Light drizzle',
-    53: 'Moderate drizzle',
-    55: 'Dense drizzle',
-    56: 'Light freezing drizzle',
-    57: 'Dense freezing drizzle',
-    61: 'Slight rain',
-    63: 'Moderate rain',
-    65: 'Heavy rain',
-    66: 'Light freezing rain',
-    67: 'Heavy freezing rain',
-    71: 'Slight snow',
-    73: 'Moderate snow',
-    75: 'Heavy snow',
-    77: 'Snow grains',
-    80: 'Slight rain showers',
-    81: 'Moderate rain showers',
-    82: 'Violent rain showers',
-    85: 'Slight snow showers',
-    86: 'Heavy snow showers',
-    95: 'Thunderstorm',
-    96: 'Thunderstorm w/ slight hail',
-    99: 'Thunderstorm w/ heavy hail'
-  };
-  return map[code] || 'Unknown conditions';
+function addTickerItem(source, title, link){
+  if (!link || seenLinks.has(link)) return;
+  seenLinks.add(link);
+  tickerItems.push(`<span><b>[${escapeHtml(source)}]</b> ${escapeHtml(title)}</span>`);
 }
 
-async function fetchFeed(url){
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const res = await fetch(RSS_PROXY + encodeURIComponent(url), { signal: controller.signal });
-    clearTimeout(timeoutId);
-    
+async function fetchWithTimeout(url, opts = {}){
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try{
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function fetchFeed(url, retries = 1){
+  for (let attempt = 0; attempt <= retries; attempt++){
+    try{
+      const res = await fetchWithTimeout(RSS_PROXY + encodeURIComponent(url));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(`RSS status: ${data.status}`);
+      return data.items || [];
+    } catch(e){
+      if (attempt === retries){
+        console.error(`Feed fetch failed for ${url}:`, e.message);
+        return [];
+      }
+      await new Promise(r => setTimeout(r, 800)); // brief backoff before retry
+    }
+  }
+  return [];
+}
+
+/* ============ RSS CATEGORY PANELS ============ */
+async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
+  const body = document.getElementById(bodyId);
+  const results = await Promise.allSettled(feedList.map(f => fetchFeed(f.url)));
+  let combined = [];
+
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length){
+      r.value.slice(0, perFeedLimit).forEach(item => {
+        combined.push({
+          title: item.title || 'Untitled',
+          link: item.link || '#',
+          pubDate: item.pubDate || new Date().toISOString(),
+          _source: feedList[i].name
+        });
+      });
+    }
+  });
+
+  combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  if (!combined.length){
+    body.innerHTML = '<div class="error">NO ITEMS — feeds unreachable</div>';
+    return;
+  }
+
+  markLive(panelId);
+  body.innerHTML = combined.slice(0, 10).map(it => `
+    <div class="row">
+      <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(it.title)}</a>
+      <div class="meta"><span class="tag" style="background:${colorVar}22;color:${colorVar}">${escapeHtml(it._source)}</span>${timeAgo(it.pubDate)}</div>
+    </div>
+  `).join('');
+
+  combined.slice(0, 3).forEach(it => addTickerItem(it._source, it.title, it.link));
+}
+
+/* ============ CRISIS PANEL (RSS + USGS quakes) ============ */
+async function loadEarthquakes(){
+  try{
+    const res = await fetchWithTimeout('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (data.status !== 'ok') throw new Error(`RSS status: ${data.status}`);
-    return data.items || [];
+    return data.features.slice(0, 5).map(f => ({
+      title: `M${f.properties.mag?.toFixed(1) ?? '?'} — ${f.properties.place}`,
+      link: f.properties.url,
+      pubDate: new Date(f.properties.time).toISOString(),
+      _source: 'USGS'
+    }));
   } catch(e){
-    console.error(`Feed fetch error for ${url}:`, e.message);
+    console.error('Earthquake fetch error:', e.message);
     return [];
   }
 }
 
-async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
-  const body = document.getElementById(bodyId);
-  try{
-    const results = await Promise.allSettled(feedList.map(f => fetchFeed(f.url)));
-    let combined = [];
-    
-    results.forEach((r, i) => {
-      if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length > 0){
-        r.value.slice(0, perFeedLimit).forEach(item => {
-          combined.push({
-            title: item.title || 'Untitled',
-            link: item.link || '#',
-            pubDate: item.pubDate || new Date().toISOString(),
-            _source: feedList[i].name
-          });
+async function loadCrisisPanel(){
+  const body = document.getElementById('crisis-body');
+  const [quakes, feedResults] = await Promise.all([
+    loadEarthquakes(),
+    Promise.allSettled(FEEDS.crisis.map(f => fetchFeed(f.url)))
+  ]);
+
+  let combined = [...quakes];
+  feedResults.forEach((r, i) => {
+    if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length){
+      r.value.slice(0, 6).forEach(item => {
+        combined.push({
+          title: item.title || 'Untitled',
+          link: item.link || '#',
+          pubDate: item.pubDate || new Date().toISOString(),
+          _source: FEEDS.crisis[i].name
         });
-      }
-    });
-    
-    combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
-    
-    if (!combined.length){
-      body.innerHTML = '<div class="error">NO ITEMS — feeds may be offline or unreachable</div>';
-      return;
+      });
     }
-    
-    markLive(panelId);
-    body.innerHTML = combined.slice(0, 10).map(it => `
-      <div class="row">
-        <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
-        <div class="meta"><span class="tag" style="background:${colorVar}22;color:${colorVar}">${it._source}</span>${timeAgo(it.pubDate)}</div>
-      </div>
-    `).join('');
-    
-    combined.slice(0,3).forEach(it => {
-      tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`);
-    });
-  } catch(e){
-    console.error(`Category load error for ${bodyId}:`, e);
-    body.innerHTML = '<div class="error">LOAD ERROR</div>';
+  });
+
+  combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  if (!combined.length){
+    body.innerHTML = '<div class="error">NO ITEMS</div>';
+    return;
   }
+
+  markLive('panel-crisis');
+  body.innerHTML = combined.slice(0, 10).map(it => `
+    <div class="row">
+      <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(it.title)}</a>
+      <div class="meta"><span class="tag" style="background:#e8935a22;color:#e8935a">${escapeHtml(it._source)}</span>${timeAgo(it.pubDate)}</div>
+    </div>
+  `).join('');
+
+  combined.slice(0, 3).forEach(it => addTickerItem(it._source, it.title, it.link));
 }
 
-/* ---------- WEATHER MAP ---------- */
-// Variable to hold map instance globally
-weatherMap = null;
-
-// Helper function to pull live data from Open-Meteo
-async function fetchOpenMeteoData(lat, lon) {
-  // Using Open-Meteo for detailed forecast metrics
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m&hourly=precipitation_probability&timezone=auto`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Meteo API response not OK');
+/* ============ WEATHER (Open-Meteo metrics + Leaflet map) ============ */
+async function fetchOpenMeteoData(lat, lon){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
+    `&timezone=auto`;
+  try{
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
-  } catch (err) {
-    console.error('Failed to fetch Open-Meteo metrics:', err);
+  } catch(e){
+    console.error('Open-Meteo fetch error:', e.message);
     return null;
   }
 }
 
-async function loadWeatherMap(lat, lon, locName) {
+function renderWeatherSummary(meteoData, locName){
+  const c = meteoData?.current;
+  const d = meteoData?.daily;
+  if (!c){
+    return `<div class="error">WEATHER METRICS UNAVAILABLE</div>`;
+  }
+  const cond = wmoText(c.weather_code);
+  const hi = d?.temperature_2m_max?.[0];
+  const lo = d?.temperature_2m_min?.[0];
+  const pop = d?.precipitation_probability_max?.[0];
+  const sunrise = d?.sunrise?.[0] ? new Date(d.sunrise[0]).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
+  const sunset = d?.sunset?.[0] ? new Date(d.sunset[0]).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
+
+  return `
+    <div class="weather-loc">${escapeHtml(locName)}</div>
+    <div class="weather-hero">
+      <div class="temp">${c.temperature_2m ?? '—'}°C</div>
+      <div class="cond">${escapeHtml(cond)}</div>
+    </div>
+    <div class="weather-grid">
+      <div><span class="k">High / Low:</span> ${hi ?? '—'}° / ${lo ?? '—'}°</div>
+      <div><span class="k">Rain chance:</span> ${pop ?? '—'}%</div>
+      <div><span class="k">Wind:</span> ${c.wind_speed_10m ?? '—'} km/h</div>
+      <div><span class="k">Gusts:</span> ${c.wind_gusts_10m ?? '—'} km/h</div>
+      <div><span class="k">Humidity:</span> ${c.relative_humidity_2m ?? '—'}%</div>
+      <div><span class="k">Precip now:</span> ${c.precipitation ?? 0} mm</div>
+      <div><span class="k">Sunrise:</span> ${sunrise}</div>
+      <div><span class="k">Sunset:</span> ${sunset}</div>
+    </div>
+  `;
+}
+
+async function loadWeatherMap(lat, lon, locName){
   const body = document.getElementById('weather-body');
-  try {
-    // Destroy old map instance if it already exists
-    if (weatherMap) {
+  try{
+    const meteoData = await fetchOpenMeteoData(lat, lon);
+    const summaryHtml = renderWeatherSummary(meteoData, locName);
+
+    body.innerHTML = `
+      <div class="weather-summary">${summaryHtml}</div>
+      <div id="leaflet-map"></div>
+    `;
+
+    // Destroy any prior map instance before re-creating (prevents leaks / "already initialized" errors)
+    if (weatherMap){
       weatherMap.remove();
       weatherMap = null;
+      weatherMarker = null;
     }
-    
-    // Create container element
-    body.innerHTML = '<div id="leaflet-map" style="width:100%;height:100%;"></div>';
-    
-    // Initialize Leaflet map instance
-    weatherMap = L.map('leaflet-map', {
-      zoomControl: true,
-      attributionControl: true
-    }).setView([lat, lon], 7);
-    
-    // 1. Base Layer: CartoDB Voyager
+
+    weatherMap = L.map('leaflet-map', { zoomControl: true, attributionControl: true }).setView([lat, lon], 7);
+
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(weatherMap);
 
-    // 2. Weather Overlay Layer: RainViewer (No key required, live radar/rain)
-    try {
-      const radarRes = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    // Rain radar overlay (best-effort, non-blocking failure)
+    try{
+      const radarRes = await fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json');
       const radarData = await radarRes.json();
-      if (radarData && radarData.radar && radarData.radar.past) {
-        const latestPath = radarData.radar.past[radarData.radar.past.length - 1].path;
-        
+      const past = radarData?.radar?.past;
+      if (past && past.length){
+        const latestPath = past[past.length - 1].path;
         L.tileLayer(`https://tilecache.rainviewer.com${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, {
-          opacity: 0.65,
-          maxZoom: 18,
-          attribution: '&copy; <a href="https://www.rainviewer.com/">RainViewer</a>'
+          opacity: 0.6, maxZoom: 18, attribution: 'RainViewer'
         }).addTo(weatherMap);
       }
-    } catch (radarErr) {
-      console.warn('Could not load radar overlay tiles:', radarErr);
+    } catch(radarErr){
+      console.warn('Radar overlay unavailable:', radarErr.message);
     }
-    
-    // 3. Fetch current location weather metrics from Open-Meteo
-    const meteoData = await fetchOpenMeteoData(lat, lon);
-    const temp = meteoData?.current?.temperature_2m ?? 'N/A';
-    const wind = meteoData?.current?.wind_speed_10m ?? 'N/A';
-    const humidity = meteoData?.current?.relative_humidity_2m ?? 'N/A';
-    const rain = meteoData?.current?.precipitation ?? 0;
 
-    // 4. Marker with Popup Details
+    const c = meteoData?.current;
     const popupContent = `
-      <div style="font-family: sans-serif; min-width: 130px;">
-        <b style="font-size:1.1em;">${escapeHtml(locName)}</b><hr style="margin:4px 0;">
-        Temp: <b>${temp}°C</b><br>
-        Wind: <b>${wind} km/h</b><br>
-        Humidity: <b>${humidity}%</b><br>
-        Rain: <b>${rain} mm</b>
+      <div style="font-family:sans-serif;min-width:130px;">
+        <b>${escapeHtml(locName)}</b><hr style="margin:4px 0;">
+        Temp: <b>${c?.temperature_2m ?? 'N/A'}°C</b><br>
+        Wind: <b>${c?.wind_speed_10m ?? 'N/A'} km/h</b><br>
+        Humidity: <b>${c?.relative_humidity_2m ?? 'N/A'}%</b><br>
+        Rain: <b>${c?.precipitation ?? 0} mm</b>
       </div>
     `;
-
-    L.circleMarker([lat, lon], {
-      radius: 8,
-      fillColor: '#4fc3d9',
-      color: '#ffffff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.9
+    weatherMarker = L.circleMarker([lat, lon], {
+      radius: 8, fillColor: '#4fc3d9', color: '#ffffff', weight: 2, opacity: 1, fillOpacity: 0.9
     }).addTo(weatherMap).bindPopup(popupContent).openPopup();
-    
+
+    // Fix rendering glitches when panel size settles after layout
+    setTimeout(() => weatherMap && weatherMap.invalidateSize(), 200);
+
     markLive('panel-weather');
-  } catch(e) {
-    console.error('Weather map error:', e);
-    body.innerHTML = '<div class="error">MAP INITIALIZATION ERROR</div>';
+  } catch(e){
+    console.error('Weather load error:', e);
+    body.innerHTML = '<div class="error">WEATHER LOAD ERROR</div>';
   }
 }
 
-function initWeather() {
-  if (navigator.geolocation) {
+function initWeather(){
+  if (navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       pos => loadWeatherMap(pos.coords.latitude, pos.coords.longitude, 'Current location'),
       () => loadWeatherMap(FALLBACK_LOC.lat, FALLBACK_LOC.lon, FALLBACK_LOC.name),
@@ -521,76 +482,23 @@ function initWeather() {
   }
 }
 
-
-  
-/* ---------- EARTHQUAKES (USGS, no key, CORS-friendly) merged into crisis panel ---------- */
-async function loadEarthquakes(){
-  try{
-    const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson');
-    const data = await res.json();
-    return data.features.slice(0,5).map(f => ({
-      title: `M${f.properties.mag.toFixed(1)} — ${f.properties.place}`,
-      link: f.properties.url,
-      pubDate: new Date(f.properties.time).toISOString(),
-      _source: 'USGS'
-    }));
-  } catch(e){ 
-    console.error('Earthquake fetch error:', e);
-    return []; 
-  }
-}
-
-async function loadCrisisPanel(){
-  const body = document.getElementById('crisis-body');
-  const [quakes, feedResults] = await Promise.all([
-    loadEarthquakes(),
-    Promise.allSettled(FEEDS.crisis.map(f => fetchFeed(f.url)))
-  ]);
-  let combined = [...quakes];
-  feedResults.forEach((r, i) => {
-    if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length > 0){
-      r.value.slice(0,6).forEach(item => {
-        combined.push({
-          title: item.title || 'Untitled',
-          link: item.link || '#',
-          pubDate: item.pubDate || new Date().toISOString(),
-          _source: FEEDS.crisis[i].name
-        });
-      });
-    }
-  });
-  combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
-  if (!combined.length){
-    body.innerHTML = '<div class="error">NO ITEMS</div>';
-    return;
-  }
-  markLive('panel-crisis');
-  body.innerHTML = combined.slice(0,10).map(it => `
-    <div class="row">
-      <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
-      <div class="meta"><span class="tag" style="background:#e8935a22;color:#e8935a">${it._source}</span>${timeAgo(it.pubDate)}</div>
-    </div>
-  `).join('');
-  combined.slice(0,3).forEach(it => {
-    tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`);
-  });
-}
-
-/* ---------- TICKER RENDER ---------- */
+/* ============ TICKER ============ */
 function renderTicker(){
   const el = document.getElementById('ticker');
   if (!tickerItems.length){
     el.innerHTML = '<span>No live items yet — waiting for feed data…</span>';
     return;
   }
-  const loop = tickerItems.concat(tickerItems);
+  const loop = tickerItems.concat(tickerItems); // duplicate once for seamless CSS scroll loop
   el.innerHTML = loop.join('');
 }
 
-/* ---------- BOOT ---------- */
-async function boot(){
+/* ============ BOOT ============ */
+let newsRefreshTimer = null;
+
+async function refreshNews(){
+  seenLinks.clear();
   tickerItems = [];
-  initWeather();
   await Promise.all([
     loadCrisisPanel(),
     loadCategory(FEEDS.news, 'news-body', 'panel-news', '#8b93f0', 8),
@@ -600,14 +508,21 @@ async function boot(){
   renderTicker();
   document.getElementById('refresh-note').textContent = 'last full refresh: ' + new Date().toLocaleTimeString('en-GB');
 }
+
+async function boot(){
+  initWeather();       // weather refreshes on its own cadence, independent of news
+  await refreshNews();
+}
+
 boot();
-setInterval(boot, 10 * 60 * 1000);
+setInterval(refreshNews, 10 * 60 * 1000);  // news/crisis/security/cyber every 10 min
+setInterval(initWeather, 15 * 60 * 1000);  // weather refreshed separately every 15 min
 </script>
-<!-- UPDATE YOUR CLOUDFLARE SCRIPT TAG TO THIS: -->
-<script 
-  defer 
-  src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" 
-  integrity="sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==" 
+
+<script
+  defer
+  src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496"
+  integrity="sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=="
   crossorigin="anonymous">
 </script>
 </body>
