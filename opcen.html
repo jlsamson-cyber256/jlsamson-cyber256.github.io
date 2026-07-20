@@ -267,12 +267,7 @@ function tickClock(){
 tickClock(); setInterval(tickClock, 1000);
 
 /* ---------- CONFIG ---------- */
-// Using feedjson.io (alternative free proxy, more stable than rss2json for CORS-heavy use)
-// If issues persist, use your own RSS reader backend or get a rss2json key
-const RSS_PROXIES = [
-  'https://api.rss2json.com/v1/api.json?rss_url=',
-  'https://rss.app/feeds/',  // fallback parser
-];
+const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 const FALLBACK_LOC = { lat: 14.5995, lon: 120.9842, name: 'Manila, PH (default)' };
 
 const FEEDS = {
@@ -347,38 +342,21 @@ function weatherCodeToText(code){
 }
 
 async function fetchFeed(url){
-  // Try primary proxy first, with timeout
   try {
-    const res = await Promise.race([
-      fetch(RSS_PROXIES[0] + encodeURIComponent(url)),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
-    ]);
-    if (!res.ok) throw new Error('proxy error');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const res = await fetch(RSS_PROXY + encodeURIComponent(url), { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (data.status !== 'ok') throw new Error('feed error');
+    if (data.status !== 'ok') throw new Error(`RSS status: ${data.status}`);
     return data.items || [];
-  } catch(e1) {
-    // Fallback: try direct fetch as JSON (some feeds support it)
-    try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/rss+xml' } });
-      if (!res.ok) throw new Error('direct fetch failed');
-      const text = await res.text();
-      // Simple XML->array extraction (basic; for production use a proper parser)
-      const itemMatches = text.match(/<item>[\s\S]*?<\/item>/g) || [];
-      return itemMatches.slice(0, 10).map(xml => ({
-        title: extractXmlTag(xml, 'title'),
-        link: extractXmlTag(xml, 'link'),
-        pubDate: new Date().toISOString()
-      }));
-    } catch(e2) {
-      throw new Error('all feed methods failed');
-    }
+  } catch(e){
+    console.error(`Feed fetch error for ${url}:`, e.message);
+    return [];
   }
-}
-
-function extractXmlTag(xml, tag) {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
-  return match ? match[1].replace(/<[^>]+>/g, '').substring(0, 200) : 'No title';
 }
 
 async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
@@ -386,27 +364,41 @@ async function loadCategory(feedList, bodyId, panelId, colorVar, perFeedLimit){
   try{
     const results = await Promise.allSettled(feedList.map(f => fetchFeed(f.url)));
     let combined = [];
+    
     results.forEach((r, i) => {
-      if (r.status === 'fulfilled' && r.value && r.value.length){
-        r.value.slice(0, perFeedLimit).forEach(item => combined.push({...item, _source: feedList[i].name}));
+      if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length > 0){
+        r.value.slice(0, perFeedLimit).forEach(item => {
+          combined.push({
+            title: item.title || 'Untitled',
+            link: item.link || '#',
+            pubDate: item.pubDate || new Date().toISOString(),
+            _source: feedList[i].name
+          });
+        });
       }
     });
+    
     combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+    
     if (!combined.length){
-      body.innerHTML = '<div class="error">FEED UNREACHABLE — RSS proxy may be rate-limited or feeds offline.</div>';
+      body.innerHTML = '<div class="error">NO ITEMS — feeds may be offline or unreachable</div>';
       return;
     }
+    
     markLive(panelId);
     body.innerHTML = combined.slice(0, 10).map(it => `
       <div class="row">
-        <a class="title" href="${it.link}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+        <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
         <div class="meta"><span class="tag" style="background:${colorVar}22;color:${colorVar}">${it._source}</span>${timeAgo(it.pubDate)}</div>
       </div>
     `).join('');
-    combined.slice(0,3).forEach(it => tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`));
+    
+    combined.slice(0,3).forEach(it => {
+      tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`);
+    });
   } catch(e){
-    console.error(`Failed to load ${bodyId}:`, e);
-    body.innerHTML = '<div class="error">FEED UNREACHABLE</div>';
+    console.error(`Category load error for ${bodyId}:`, e);
+    body.innerHTML = '<div class="error">LOAD ERROR</div>';
   }
 }
 
@@ -434,7 +426,7 @@ async function loadWeather(lat, lon, locName){
     `;
   } catch(e){
     console.error('Weather error:', e);
-    body.innerHTML = '<div class="error">WEATHER FEED UNREACHABLE</div>';
+    body.innerHTML = '<div class="error">WEATHER UNREACHABLE</div>';
   }
 }
 
@@ -461,7 +453,10 @@ async function loadEarthquakes(){
       pubDate: new Date(f.properties.time).toISOString(),
       _source: 'USGS'
     }));
-  } catch(e){ return []; }
+  } catch(e){ 
+    console.error('Earthquake fetch error:', e);
+    return []; 
+  }
 }
 
 async function loadCrisisPanel(){
@@ -472,39 +467,48 @@ async function loadCrisisPanel(){
   ]);
   let combined = [...quakes];
   feedResults.forEach((r, i) => {
-    if (r.status === 'fulfilled' && r.value && r.value.length){
-      r.value.slice(0,6).forEach(item => combined.push({...item, _source: FEEDS.crisis[i].name}));
+    if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length > 0){
+      r.value.slice(0,6).forEach(item => {
+        combined.push({
+          title: item.title || 'Untitled',
+          link: item.link || '#',
+          pubDate: item.pubDate || new Date().toISOString(),
+          _source: FEEDS.crisis[i].name
+        });
+      });
     }
   });
   combined.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
   if (!combined.length){
-    body.innerHTML = '<div class="error">FEED UNREACHABLE</div>';
+    body.innerHTML = '<div class="error">NO ITEMS</div>';
     return;
   }
   markLive('panel-crisis');
   body.innerHTML = combined.slice(0,10).map(it => `
     <div class="row">
-      <a class="title" href="${it.link}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
+      <a class="title" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>
       <div class="meta"><span class="tag" style="background:#e8935a22;color:#e8935a">${it._source}</span>${timeAgo(it.pubDate)}</div>
     </div>
   `).join('');
-  combined.slice(0,3).forEach(it => tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`));
+  combined.slice(0,3).forEach(it => {
+    tickerItems.push(`<span><b>[${it._source}]</b> ${escapeHtml(it.title)}</span>`);
+  });
 }
 
 /* ---------- TICKER RENDER ---------- */
 function renderTicker(){
   const el = document.getElementById('ticker');
   if (!tickerItems.length){
-    el.innerHTML = '<span>No live items yet — feeds still loading, or proxy rate-limited.</span>';
+    el.innerHTML = '<span>No live items yet — waiting for feed data…</span>';
     return;
   }
-  const loop = tickerItems.concat(tickerItems); // duplicate for seamless scroll
+  const loop = tickerItems.concat(tickerItems);
   el.innerHTML = loop.join('');
 }
 
 /* ---------- BOOT ---------- */
 async function boot(){
-  tickerItems = []; // reset so headlines don't pile up on every refresh cycle
+  tickerItems = [];
   initWeather();
   await Promise.all([
     loadCrisisPanel(),
@@ -516,7 +520,7 @@ async function boot(){
   document.getElementById('refresh-note').textContent = 'last full refresh: ' + new Date().toLocaleTimeString('en-GB');
 }
 boot();
-setInterval(boot, 10 * 60 * 1000); // refresh every 10 minutes
+setInterval(boot, 10 * 60 * 1000);
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWky8ZY8CrkK+L5jYD24Jbg7Ybw==" data-cf-beacon='{"rayId":"8b6b8c6cfe9a3c19","version":"2024.10.4","token":"4552228ebc084fefa6c8fa76f0bc74e3"}' crossorigin="anonymous"></script>
 </body>
