@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Between the Tides — Coastal &amp; Marine Degradation in the Philippines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:        #0B2E3C;   /* deep water */
+    --teal:       #1F6F78;   /* tidal teal */
+    --foam:       #F6F4EC;   /* pale sand/foam background */
+    --sand:       #E5DCC3;   /* dry sand */
+    --seafoam:    #AFC9C2;   /* shallow water */
+    --coral:      #D9552B;   /* warning coral */
+    --line:       rgba(11,46,60,0.15);
+    --max: 720px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    background:var(--foam);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.6;
+    font-size:17px;
+  }
+
+  h1,h2,h3,.wordmark{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    margin:0;
+  }
+
+  a{ color:var(--teal); }
+  a:focus-visible, button:focus-visible{ outline:2px solid var(--coral); outline-offset:3px; }
+
+  .wrap{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- Disclaimer strip ---------- */
+  .disclaimer{
+    background:var(--ink);
+    color:var(--foam);
+    font-size:13.5px;
+    padding:10px 24px;
+    text-align:center;
+  }
+  .disclaimer span{ opacity:0.85; }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:28px 0 0;
+  }
+  .header-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .wordmark{
+    font-size:22px;
+    letter-spacing:0.01em;
+  }
+  .wordmark em{ font-style:italic; color:var(--teal); }
+  nav{ font-size:14.5px; display:flex; gap:20px; }
+  nav a{ text-decoration:none; color:var(--ink); border-bottom:1px solid var(--line); padding-bottom:2px; }
+  nav a:hover{ border-color:var(--coral); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:64px 0 40px;
+  }
+  .hero h1{
+    font-size:clamp(34px, 6vw, 52px);
+    line-height:1.12;
+    max-width:11ch;
+  }
+  .hero .lede{
+    margin-top:22px;
+    max-width:52ch;
+    font-size:18px;
+    color:#243b45;
+  }
+  .tideline{
+    display:block;
+    width:100%;
+    height:auto;
+    margin-top:44px;
+  }
+
+  /* ---------- Sections ---------- */
+  section{ padding:52px 0; }
+  section + section{ border-top:1px solid var(--line); }
+
+  .eyebrow-mark{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+    color:var(--teal);
+    font-size:14.5px;
+  }
+  .eyebrow-mark .tick{
+    width:18px; height:2px; background:var(--coral); display:inline-block;
+  }
+
+  section h2{
+    font-size:clamp(24px, 3.4vw, 30px);
+    max-width:16ch;
+  }
+  section p{
+    max-width:64ch;
+    margin:16px 0 0;
+  }
+  section p + p{ margin-top:12px; }
+
+  .stat-row{
+    display:flex;
+    gap:36px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    min-width:160px;
+  }
+  .stat .num{
+    font-family:'Fraunces', serif;
+    font-size:34px;
+    color:var(--ink);
+  }
+  .stat .cap{
+    font-size:13.5px;
+    color:#4b6169;
+    margin-top:4px;
+    max-width:22ch;
+  }
+
+  /* tide-level bar comparing 2010 vs 2024 catch */
+  .tide-bars{
+    margin-top:30px;
+    max-width:420px;
+  }
+  .tide-bar-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .tide-bar-label{
+    width:52px;
+    font-size:13.5px;
+    color:#4b6169;
+    flex-shrink:0;
+  }
+  .tide-bar-track{
+    flex:1;
+    background:var(--sand);
+    height:14px;
+    position:relative;
+  }
+  .tide-bar-fill{
+    background:var(--teal);
+    height:100%;
+  }
+  .tide-bar-fill.now{ background:var(--coral); }
+  .tide-bar-value{
+    font-size:13px;
+    color:var(--ink);
+    width:70px;
+    text-align:right;
+    flex-shrink:0;
+  }
+
+  /* image credit placeholders */
+  .media-block{
+    margin-top:30px;
+    border:1px solid var(--line);
+    background:#fff;
+    padding:14px;
+  }
+  .media-frame{
+    aspect-ratio:16/9;
+    background:linear-gradient(180deg, var(--seafoam), var(--teal));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#eef6f4;
+    font-size:14px;
+    text-align:center;
+    padding:16px;
+  }
+  .media-credit{
+    font-size:12.5px;
+    color:#5a6f76;
+    margin-top:10px;
+  }
+
+  .impact-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0;
+    margin-top:30px;
+    border-top:1px solid var(--line);
+  }
+  .impact-row{
+    padding:20px 0;
+    border-bottom:1px solid var(--line);
+    display:grid;
+    grid-template-columns:140px 1fr;
+    gap:18px;
+  }
+  .impact-row .who{
+    font-size:13.5px;
+    color:var(--teal);
+    text-transform:none;
+    padding-top:2px;
+  }
+  .impact-row p{ margin:0; max-width:56ch; }
+
+  /* sources */
+  .source-list{
+    list-style:none;
+    margin:26px 0 0;
+    padding:0;
+    display:grid;
+    gap:12px;
+  }
+  .source-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    font-size:15px;
+  }
+  .source-list .tag{
+    font-size:12.5px;
+    color:#4b6169;
+    flex-shrink:0;
+  }
+
+  footer{
+    background:var(--ink);
+    color:#cfe0e2;
+    padding:40px 0 32px;
+  }
+  footer .wrap{ max-width:var(--max); }
+  footer h3{ color:#fff; font-size:18px; }
+  footer p{ font-size:14px; max-width:60ch; margin-top:12px; color:#b7cbce; }
+  footer .fine{ font-size:12.5px; margin-top:24px; color:#7f9a9e; }
+
+  @media (max-width:560px){
+    .impact-row{ grid-template-columns:1fr; gap:6px; }
+    .stat-row{ gap:24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="disclaimer">
+  <span>School project (Mapúa MMDC) — created to inform on an environmental issue and encourage action for the protection of Earth's ecosystems. Not an official organization.</span>
+</div>
+
+<header>
+  <div class="wrap header-row">
+    <div class="wordmark">Between the <em>Tides</em></div>
+    <nav>
+      <a href="#issue">The Issue</a>
+      <a href="#impact">Who Feels It</a>
+      <a href="#sources">Sources</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>The tide is taking more than it gives back.</h1>
+    <p class="lede">A look at coastal and marine degradation in the Philippines — what's happening beneath the surface, and who is already paying for it.</p>
+    <svg class="tideline" viewBox="0 0 720 60" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 30 C 60 10, 120 50, 180 30 S 300 10, 360 30 S 480 50, 540 30 S 660 10, 720 30" fill="none" stroke="#1F6F78" stroke-width="2"/>
+      <path d="M0 42 C 60 22, 120 62, 180 42 S 300 22, 360 42 S 480 62, 540 42 S 660 22, 720 42" fill="none" stroke="#AFC9C2" stroke-width="2"/>
+    </svg>
+  </div>
+</section>
+
+<section id="issue">
+  <div class="wrap">
+    <div class="eyebrow-mark"><span class="tick"></span>What's happening</div>
+    <h2>Coastal and marine degradation, in plain terms</h2>
+    <p>The Philippines' coastal and marine ecosystems are under sustained pressure from three directions at once: overfishing and illegal commercial fishing inside municipal waters, marine litter building up on shorelines and seabeds, and the loss of coral reefs and mangroves that once buffered the coast and sheltered marine life.</p>
+    <p>Government fisheries data shows this isn't a future risk — it's a decade-long trend. Both municipal and commercial fisheries production have been declining since a peak around 2010, even as detections of illegal commercial fishing inside municipal waters have risen since the pandemic.</p>
+
+    <div class="tide-bars">
+      <div class="tide-bar-row">
+        <div class="tide-bar-label">2010</div>
+        <div class="tide-bar-track"><div class="tide-bar-fill" style="width:100%"></div></div>
+        <div class="tide-bar-value">~334,000 MT</div>
+      </div>
+      <div class="tide-bar-row">
+        <div class="tide-bar-label">2024</div>
+        <div class="tide-bar-track"><div class="tide-bar-fill now" style="width:76%"></div></div>
+        <div class="tide-bar-value">~253,000 MT</div>
+      </div>
+    </div>
+    <p class="media-credit">Bali sardinella (tamban) catch volume, national total. Source: PSA / BFAR data, as reported by Oceana Philippines.</p>
+
+    <div class="media-block">
+      <div class="media-frame">Photo — degraded coastline or fish landing site<br>(replace with your own sourced image)</div>
+      <p class="media-credit">Credit: [source name] — replace this placeholder with a real photo and its owner/source before publishing.</p>
+    </div>
+  </div>
+</section>
+
+<section id="impact">
+  <div class="wrap">
+    <div class="eyebrow-mark"><span class="tick"></span>Who feels it first</div>
+    <h2>What this costs people and ecosystems</h2>
+
+    <div class="impact-grid">
+      <div class="impact-row">
+        <div class="who">Fisherfolk</div>
+        <p>Municipal fishing is the livelihood backbone of most coastal communities. As catch volumes shrink and illegal commercial vessels encroach on municipal waters, small-scale fisherfolk absorb the loss first and most directly.</p>
+      </div>
+      <div class="impact-row">
+        <div class="who">Food security</div>
+        <p>Fish remains a primary protein source for many Filipino households. A shrinking, less reliable catch puts pressure on coastal food supply and prices.</p>
+      </div>
+      <div class="impact-row">
+        <div class="who">Local economies</div>
+        <p>Coastal tourism and fish trade depend on visibly healthy reefs and shorelines. Litter accumulation and reef degradation make both harder to sustain.</p>
+      </div>
+      <div class="impact-row">
+        <div class="who">Marine ecosystems</div>
+        <p>Coral reefs and mangroves are nurseries for fish and natural storm buffers. Their degradation reduces biodiversity and leaves coastlines more exposed to erosion and storm surge.</p>
+      </div>
+    </div>
+
+    <div class="media-block">
+      <div class="media-frame">Video/GIF — coral reef or mangrove footage<br>(replace with your own sourced clip)</div>
+      <p class="media-credit">Credit: [source name] — replace this placeholder with real footage and its owner/source before publishing.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="eyebrow-mark"><span class="tick"></span>Where this comes from</div>
+    <h2>Sources for this page</h2>
+    <p>Every claim above traces back to a government agency or an outlet reporting directly on that agency's data. No claim on this page is drawn from Wikipedia or unverified social posts.</p>
+    <ul class="source-list">
+      <li><span>Bureau of Fisheries and Aquatic Resources (BFAR)</span><span class="tag">bfar.da.gov.ph</span></li>
+      <li><span>Oceana Philippines</span><span class="tag">ph.oceana.org</span></li>
+      <li><span>Department of Environment and Natural Resources (DENR)</span><span class="tag">denr.gov.ph</span></li>
+      <li><span>Philippine Statistics Authority (PSA)</span><span class="tag">psa.gov.ph</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <h3>About this page</h3>
+    <p>Between the Tides is a student-made Digital Advocacy Page created for a Mapúa MMDC course requirement. It exists to inform the public about coastal and marine degradation in the Philippines and to encourage collective action toward protecting Earth's ecosystems.</p>
+    <p class="fine">This is a school project, not an official organization, NGO, or government page. All third-party images, videos, and data are credited to their original sources and used for educational purposes.</p>
+  </div>
+</footer>
+
+</body>
+</html>
