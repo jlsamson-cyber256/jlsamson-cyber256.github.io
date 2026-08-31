@@ -181,14 +181,34 @@
     flex-shrink:0;
   }
 
-  /* image credit placeholders */
+  /* media (photo/video) blocks */
   .media-block{
     margin-top:30px;
     border:1px solid var(--line);
     background:#fff;
     padding:14px;
   }
- 
+  .media-block img{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:2px;
+  }
+  /* responsive 16:9 video embed */
+  .video-wrapper{
+    position:relative;
+    width:100%;
+    padding-top:56.25%;
+    overflow:hidden;
+    border-radius:2px;
+  }
+  .video-wrapper iframe{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    border:0;
+  }
   .media-credit{
     font-size:12.5px;
     color:#5a6f76;
@@ -305,19 +325,14 @@
     </div>
     <p class="media-credit">Bali sardinella (tamban) catch volume, national total. Source: PSA / BFAR data, as reported by Oceana Philippines.</p>
 
-  <div class="media-block">
-    <p>Photo — degraded coastline or fish landing site</p>
-  </div>
-
-  <img
-    src="web-assets/photo-degraded-coastline.jpg"
-    alt="Degraded coastline or fish landing site"
-    style="width: 100%; border-radius: 4px;"
-  >
-</div>
-
-      <p class="media-credit">Credit:KEN NEDIMYER </p>
+    <div class="media-block">
+      <img
+        src="web-assets/photo-degraded-coastline.jpg"
+        alt="Degraded coastline or fish landing site"
+      >
+      <p class="media-credit">Credit: Ken Nedimyer</p>
     </div>
+
   </div>
 </section>
 
@@ -345,21 +360,17 @@
       </div>
     </div>
 
-<div class="media-block">
-    <p>Video — degraded coral reef</p>
-  </div>
-
-  <div class="video-wrapper">
-    <iframe
-      src="https://www.youtube.com/embed/_5DooxgwEiw"
-      title="Degraded Coral Reef"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen
-    ></iframe>
-  </div>
-</div>
-
-
+    <div class="media-block">
+      <div class="video-wrapper">
+        <iframe
+          src="https://www.youtube.com/embed/_5DooxgwEiw"
+          title="Degraded Coral Reef"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <p class="media-credit">Video: degraded coral reef</p>
+    </div>
 
   </div>
 </section>
