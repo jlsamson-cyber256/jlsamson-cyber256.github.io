@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Local Vault</title>
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--mut:#666666;--line:#d4d4d4;--acc:#0b5cad;--bad:#b00020}
+@media (prefers-color-scheme:dark){:root{--bg:#161616;--fg:#e6e6e6;--mut:#9a9a9a;--line:#333333;--acc:#6cb0f5;--bad:#ff6b6b}}
+html{color-scheme:light dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+code,.mono{font-family:Hack,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+main{max-width:820px;margin:0 auto;padding:24px 16px}
+h1{font-size:22px;margin:0}
+h2{font-size:17px;margin:20px 0 8px}
+.mut{color:var(--mut)}
+.bad{color:var(--bad)}
+label{display:block;margin-top:10px}
+input[type=text],input[type=password],input[type=search],input[type=number],textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);font:inherit}
+input.mono,textarea.mono{font-family:Hack,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+label.inline{display:flex;align-items:center;gap:8px;margin-top:8px}
+button{padding:6px 12px;background:transparent;color:var(--fg);border:1px solid var(--line);font:inherit;cursor:pointer}
+button:hover{border-color:var(--fg)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.row{border-top:1px solid var(--line);padding:10px 0}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.secret{margin-top:6px;word-break:break-all}
+dialog{max-width:480px;width:calc(100% - 32px);box-sizing:border-box;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+output{display:block;margin-top:8px;padding:8px;border:1px solid var(--line);word-break:break-all}
+details{margin-top:28px;border-top:1px solid var(--line);padding-top:12px}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Local Vault</h1>
+  <p class="mut">Encrypted password vault. Runs inside this one file, with no network access.</p>
+</header>
+
+<p id="status" role="status" class="mut"></p>
+
+<section id="lock">
+  <h2 id="lock-title"></h2>
+  <form id="lock-form">
+    <label>Master password
+      <input id="mp" type="password" autocomplete="off" spellcheck="false">
+    </label>
+    <label id="confirm-wrap">Confirm master password
+      <input id="mp2" type="password" autocomplete="off" spellcheck="false">
+    </label>
+    <p id="hint" class="mut">Use at least 12 characters. A long passphrase works well. There is no recovery: if the master password is lost, the vault cannot be opened.</p>
+    <p id="lock-msg" role="alert" class="bad"></p>
+    <button id="lock-go" type="submit"></button>
+    <button id="cancel-restore" type="button">Cancel restore</button>
+  </form>
+  <p>
+    <button id="restore" type="button">Restore from backup file</button>
+    <input id="file" type="file" accept="application/json,.json" hidden>
+  </p>
+</section>
+
+<section id="app" hidden>
+  <input id="q" type="search" placeholder="Search name, URL, username, notes" aria-label="Search entries" autocomplete="off">
+  <div class="bar">
+    <button id="add" type="button">Add entry</button>
+    <button id="gen" type="button">Generator</button>
+    <button id="export" type="button">Export backup</button>
+    <button id="chmp" type="button">Change master password</button>
+    <button id="lockbtn" type="button">Lock</button>
+    <button id="wipe" type="button">Delete vault</button>
+  </div>
+  <p id="count" class="mut"></p>
+  <div id="list"></div>
+</section>
+
+<details>
+  <summary>How it works and its limits</summary>
+  <ul>
+    <li>Key derivation: PBKDF2-SHA-256 (Password-Based Key Derivation Function 2 using the Secure Hash Algorithm, 256-bit) with 600,000 iterations and a random 16-byte salt. The count follows OWASP (Open Worldwide Application Security Project) guidance.</li>
+    <li>Encryption: AES-256-GCM (Advanced Encryption Standard, 256-bit key, Galois/Counter Mode). A fresh random 12-byte initialization vector is generated on every save, and the settings are bound to the ciphertext as authenticated data.</li>
+    <li>Storage: only ciphertext is written to this browser’s localStorage. Clearing site data deletes the vault, so use Export backup regularly and keep the backup file somewhere safe.</li>
+    <li>Network: a Content Security Policy (CSP) in this file blocks all outbound requests, so the page cannot send data anywhere.</li>
+    <li>Auto-lock: after 5 minutes without input, or 60 seconds after the tab is hidden. Copied secrets are cleared from the clipboard after 20 seconds.</li>
+    <li>Limits: no sync, no browser autofill, and no independent security audit. Malware, a keylogger, or a malicious browser extension on this device can defeat any browser-based vault. Strength readouts are upper-bound estimates and do not detect dictionary words or patterns.</li>
+  </ul>
+</details>
+</main>
+
+<dialog id="ed">
+  <form id="ed-form">
+    <h2 id="ed-title"></h2>
+    <input id="f-id" type="hidden">
+    <label>Name<input id="f-name" type="text" autocomplete="off"></label>
+    <label>URL (Uniform Resource Locator)<input id="f-url" type="text" autocomplete="off" spellcheck="false"></label>
+    <label>Username<input id="f-user" type="text" autocomplete="off" spellcheck="false"></label>
+    <label>Password<input id="f-pass" class="mono" type="password" autocomplete="new-password" spellcheck="false"></label>
+    <label class="inline"><input id="f-show" type="checkbox"> Show password</label>
+    <p id="f-str" class="mut"></p>
+    <label>Notes<textarea id="f-notes" rows="3"></textarea></label>
+    <p id="ed-msg" role="alert" class="bad"></p>
+    <div class="acts">
+      <button type="submit">Save entry</button>
+      <button id="f-gen" type="button">Generate password</button>
+      <button id="ed-cancel" type="button">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="gd">
+  <h2>Password generator</h2>
+  <label>Length: <span id="g-lenv">24</span>
+    <input id="g-len" type="range" min="8" max="128" value="24">
+  </label>
+  <label class="inline"><input id="g-lower" type="checkbox" checked> Lowercase letters</label>
+  <label class="inline"><input id="g-upper" type="checkbox" checked> Uppercase letters</label>
+  <label class="inline"><input id="g-digit" type="checkbox" checked> Digits</label>
+  <label class="inline"><input id="g-symbol" type="checkbox" checked> Symbols</label>
+  <label class="inline"><input id="g-noamb" type="checkbox"> Exclude look-alike characters (I, l, 1, O, 0, o)</label>
+  <output id="g-out" class="mono"></output>
+  <p id="g-bits" class="mut"></p>
+  <div class="acts">
+    <button id="g-again" type="button">Regenerate</button>
+    <button id="g-copy" type="button">Copy</button>
+    <button id="g-use" type="button">Use this password</button>
+    <button id="g-close" type="button">Close</button>
+  </div>
+</dialog>
+
+<dialog id="cm">
+  <form id="cm-form">
+    <h2>Change master password</h2>
+    <label>Current master password<input id="cm-old" type="password" autocomplete="off"></label>
+    <label>New master password<input id="cm-new" type="password" autocomplete="off"></label>
+    <label>Confirm new master password<input id="cm-new2" type="password" autocomplete="off"></label>
+    <p id="cm-msg" role="alert" class="bad"></p>
+    <div class="acts">
+      <button id="cm-go" type="submit">Change password</button>
+      <button id="cm-cancel" type="button">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+
+/* ---------- constants and state ---------- */
+const STORE = "localvault.v1";
+const ITER = 600000;
+const IDLE_MS = 5 * 60 * 1000;
+const HIDDEN_MS = 60 * 1000;
+const CLIP_MS = 20 * 1000;
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+const $ = (s) => document.querySelector(s);
+
+const st = {
+  key: null, salt: null, iter: ITER, entries: [], blob: null,
+  pending: null, shown: new Set(), idle: null, hid: null, clip: null, genTarget: null
+};
+
+/* ---------- helpers ---------- */
+function h(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+}
+function say(msg, bad) {
+  const s = $("#status");
+  s.textContent = msg;
+  s.className = bad ? "bad" : "mut";
+}
+function toB64(buf) {
+  const u = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function fromB64(s) {
+  const bin = atob(s);
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function rid() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+function randInt(max) {
+  const lim = Math.floor(4294967296 / max) * max;
+  const a = new Uint32Array(1);
+  do { crypto.getRandomValues(a); } while (a[0] >= lim);
+  return a[0] % max;
+}
+function estBits(pw) {
+  if (!pw) return 0;
+  let pool = 0;
+  if (/[a-z]/.test(pw)) pool += 26;
+  if (/[A-Z]/.test(pw)) pool += 26;
+  if (/\d/.test(pw)) pool += 10;
+  if (/[^A-Za-z0-9]/.test(pw)) pool += 32;
+  return Math.round(pw.length * Math.log2(pool || 1));
+}
+function rating(b) { return b < 40 ? "weak" : b < 60 ? "fair" : b < 80 ? "strong" : "very strong"; }
+
+/* ---------- storage ---------- */
+function readStore() {
+  try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function writeStore(obj) {
+  try { localStorage.setItem(STORE, JSON.stringify(obj)); return true; }
+  catch (e) { return false; }
+}
+function validBlob(b) {
+  return !!b && b.v === 1 && Number.isInteger(b.iter) && b.iter >= 100000 && b.iter <= 5000000 &&
+    ["salt", "iv", "ct"].every((k) => typeof b[k] === "string");
+}
+
+/* ---------- crypto ---------- */
+async function deriveKey(pw, salt, iter) {
+  const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+  );
+}
+const aad = (iter) => enc.encode("localvault|v1|" + iter);
+
+async function seal() {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const pt = enc.encode(JSON.stringify({ entries: st.entries }));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad(st.iter) }, st.key, pt);
+  const blob = { v: 1, kdf: "PBKDF2-SHA256", iter: st.iter, salt: toB64(st.salt), iv: toB64(iv), ct: toB64(ct) };
+  st.blob = blob;
+  return writeStore(blob);
+}
+async function openBlob(blob, pw) {
+  const salt = fromB64(blob.salt);
+  const key = await deriveKey(pw, salt, blob.iter);
+  const pt = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: fromB64(blob.iv), additionalData: aad(blob.iter) }, key, fromB64(blob.ct)
+  );
+  const data = JSON.parse(dec.decode(pt));
+  return { key, salt, iter: blob.iter, entries: Array.isArray(data.entries) ? data.entries : [] };
+}
+
+/* ---------- lock and unlock ---------- */
+function showLock() {
+  $("#app").hidden = true;
+  $("#lock").hidden = false;
+  const stored = st.pending || readStore();
+  const creating = !stored;
+  $("#lock-title").textContent = st.pending ? "Restore backup" : creating ? "Create vault" : "Unlock vault";
+  $("#lock-go").textContent = st.pending ? "Restore" : creating ? "Create vault" : "Unlock";
+  $("#confirm-wrap").hidden = !creating;
+  $("#hint").hidden = !creating;
+  $("#cancel-restore").hidden = !st.pending;
+  $("#mp").value = "";
+  $("#mp2").value = "";
+  $("#lock-msg").textContent = "";
+  $("#mp").focus();
+}
+function enterApp() {
+  $("#lock").hidden = true;
+  $("#app").hidden = false;
+  $("#q").value = "";
+  render();
+  bump();
+}
+function lock(msg) {
+  st.key = null; st.salt = null; st.entries = []; st.shown.clear(); st.genTarget = null;
+  clearTimeout(st.idle); clearTimeout(st.hid);
+  document.querySelectorAll("dialog[open]").forEach((d) => d.close());
+  ["#f-pass", "#f-name", "#f-user", "#f-url", "#f-notes", "#g-out", "#cm-old", "#cm-new", "#cm-new2"].forEach((s) => {
+    const el = $(s); if ("value" in el) el.value = ""; else el.textContent = "";
+  });
+  $("#list").replaceChildren();
+  showLock();
+  say(msg || "Locked.");
+}
+function bump() {
+  clearTimeout(st.idle);
+  if (st.key) st.idle = setTimeout(() => lock("Locked after 5 minutes without input."), IDLE_MS);
+}
+["pointerdown", "keydown", "scroll"].forEach((ev) => addEventListener(ev, bump, { passive: true }));
+document.addEventListener("visibilitychange", () => {
+  clearTimeout(st.hid);
+  if (document.hidden && st.key) st.hid = setTimeout(() => lock("Locked while the tab was hidden."), HIDDEN_MS);
+});
+
+$("#lock-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const pw = $("#mp").value;
+  const stored = st.pending || readStore();
+  const btn = $("#lock-go");
+  btn.disabled = true;
+  $("#lock-msg").textContent = "";
+  say("Working. Key derivation takes a moment.");
+  try {
+    if (!stored) {
+      if (pw.length < 12) throw new Error("Use at least 12 characters.");
+      if (pw !== $("#mp2").value) throw new Error("The two passwords do not match.");
+      st.salt = crypto.getRandomValues(new Uint8Array(16));
+      st.iter = ITER;
+      st.key = await deriveKey(pw, st.salt, ITER);
+      st.entries = [];
+      const ok = await seal();
+      enterApp();
+      say(ok ? "Vault created. Export a backup once you add entries." : "Vault created in memory only. Browser storage failed, so export a backup before closing.", !ok);
+    } else {
+      if (!validBlob(stored)) throw new Error("The stored vault data is unreadable.");
+      let r;
+      try { r = await openBlob(stored, pw); }
+      catch (e) { throw new Error("Wrong password, or the vault data is damaged."); }
+      Object.assign(st, r);
+      st.blob = stored;
+      let ok = true;
+      if (st.pending) { ok = writeStore(stored); st.pending = null; }
+      enterApp();
+      say(ok ? "Unlocked." : "Unlocked, but the restored vault could not be saved to browser storage.", !ok);
+    }
+  } catch (err) {
+    $("#lock-msg").textContent = err.message;
+    say("");
+  } finally {
+    btn.disabled = false;
+    $("#mp").value = "";
+    $("#mp2").value = "";
+  }
+});
+
+/* ---------- restore from backup ---------- */
+$("#restore").addEventListener("click", () => $("#file").click());
+$("#file").addEventListener("change", async () => {
+  const f = $("#file").files[0];
+  $("#file").value = "";
+  if (!f) return;
+  try {
+    const b = JSON.parse(await f.text());
+    if (!validBlob(b)) throw new Error("bad format");
+    if (readStore() && !confirm("Restoring replaces the vault stored in this browser. Continue?")) return;
+    st.pending = b;
+    showLock();
+    say("Backup loaded. Enter the master password that belongs to this backup.");
+  } catch (e) {
+    say("That file is not a valid vault backup.", true);
+  }
+});
+$("#cancel-restore").addEventListener("click", () => { st.pending = null; showLock(); say(""); });
+
+/* ---------- list rendering ---------- */
+function render() {
+  const q = $("#q").value.trim().toLowerCase();
+  const list = $("#list");
+  list.replaceChildren();
+  const items = st.entries
+    .filter((e) => !q || [e.name, e.url, e.user, e.notes].join("\n").toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  $("#count").textContent = items.length + " of " + st.entries.length + " entries";
+  if (!st.entries.length) {
+    list.append(h("p", { class: "mut" }, "The vault is empty. Select Add entry to store your first login."));
+    return;
+  }
+  for (const e of items) {
+    const shown = st.shown.has(e.id);
+    const meta = h("div", {}, h("strong", {}, e.name));
+    if (e.user) meta.append(h("div", { class: "mut" }, e.user));
+    if (e.url) meta.append(h("div", { class: "mut mono" }, e.url));
+    const row = h("div", { class: "row" }, meta);
+    if (shown) {
+      row.append(h("div", { class: "secret mono" }, e.pass));
+      if (e.notes) row.append(h("div", { class: "secret" }, e.notes));
+    }
+    row.append(h("div", { class: "acts" },
+      h("button", { type: "button", onclick: () => copy(e.user, "Username") }, "Copy username"),
+      h("button", { type: "button", onclick: () => copy(e.pass, "Password") }, "Copy password"),
+      h("button", { type: "button", onclick: () => { shown ? st.shown.delete(e.id) : st.shown.add(e.id); render(); } }, shown ? "Hide" : "Show"),
+      h("button", { type: "button", onclick: () => openEditor(e) }, "Edit"),
+      h("button", { type: "button", onclick: () => removeEntry(e) }, "Delete")
+    ));
+    list.append(row);
+  }
+}
+$("#q").addEventListener("input", render);
+
+async function copy(text, what) {
+  if (!text) { say("Nothing to copy.", true); return; }
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { say("The browser blocked clipboard access. Use Show and copy manually.", true); return; }
+  say(what + " copied. The clipboard clears in " + CLIP_MS / 1000 + " seconds.");
+  clearTimeout(st.clip);
+  st.clip = setTimeout(async () => {
+    try {
+      let current = text;
+      try { current = await navigator.clipboard.readText(); } catch (e) { /* permission denied: clear anyway */ }
+      if (current === text) await navigator.clipboard.writeText("");
+    } catch (e) { /* ignore */ }
+    say("Clipboard cleared.");
+  }, CLIP_MS);
+}
+
+async function removeEntry(e) {
+  if (!confirm("Delete the entry “" + e.name + "”? This cannot be undone.")) return;
+  st.entries = st.entries.filter((x) => x.id !== e.id);
+  st.shown.delete(e.id);
+  const ok = await seal();
+  render();
+  say(ok ? "Entry deleted." : "Deleted in memory only. Browser storage failed; export a backup now.", !ok);
+}
+
+/* ---------- entry editor ---------- */
+function strength() {
+  const pw = $("#f-pass").value;
+  const b = estBits(pw);
+  $("#f-str").textContent = pw ? "Estimated strength: " + rating(b) + " (about " + b + " bits, upper bound)." : "";
+}
+function openEditor(e) {
+  $("#ed-title").textContent = e ? "Edit entry" : "Add entry";
+  $("#f-id").value = e ? e.id : "";
+  $("#f-name").value = e ? e.name : "";
+  $("#f-url").value = e ? e.url || "" : "";
+  $("#f-user").value = e ? e.user || "" : "";
+  $("#f-pass").value = e ? e.pass || "" : "";
+  $("#f-notes").value = e ? e.notes || "" : "";
+  $("#f-pass").type = "password";
+  $("#f-show").checked = false;
+  $("#ed-msg").textContent = "";
+  strength();
+  $("#ed").showModal();
+  $("#f-name").focus();
+}
+$("#add").addEventListener("click", () => openEditor(null));
+$("#f-pass").addEventListener("input", strength);
+$("#f-show").addEventListener("change", () => { $("#f-pass").type = $("#f-show").checked ? "text" : "password"; });
+$("#ed-cancel").addEventListener("click", () => $("#ed").close());
+$("#ed").addEventListener("close", () => { $("#f-pass").value = ""; });
+$("#ed-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const name = $("#f-name").value.trim();
+  if (!name) { $("#ed-msg").textContent = "Name is required."; return; }
+  const id = $("#f-id").value;
+  const rec = {
+    id: id || rid(), name,
+    url: $("#f-url").value.trim(), user: $("#f-user").value.trim(),
+    pass: $("#f-pass").value, notes: $("#f-notes").value,
+    updated: new Date().toISOString()
+  };
+  const i = st.entries.findIndex((x) => x.id === id);
+  if (i >= 0) st.entries[i] = rec; else st.entries.push(rec);
+  const ok = await seal();
+  $("#ed").close();
+  render();
+  say(ok ? "Entry saved." : "Saved in memory only. Browser storage failed; export a backup now.", !ok);
+});
+
+/* ---------- generator ---------- */
+const SETS = {
+  lower: "abcdefghijklmnopqrstuvwxyz",
+  upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  digit: "0123456789",
+  symbol: "!@#$%^&*()-_=+[]{};:,.?/"
+};
+function generate() {
+  const len = +$("#g-len").value;
+  const noamb = $("#g-noamb").checked;
+  const pools = Object.keys(SETS)
+    .filter((k) => $("#g-" + k).checked)
+    .map((k) => (noamb ? SETS[k].replace(/[Il1O0o]/g, "") : SETS[k]));
+  if (!pools.length) return null;
+  const all = pools.join("");
+  const out = pools.map((p) => p[randInt(p.length)]);
+  while (out.length < len) out.push(all[randInt(all.length)]);
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return { pw: out.join(""), bits: Math.round(len * Math.log2(all.length)) };
+}
+function refreshGen() {
+  $("#g-lenv").textContent = $("#g-len").value;
+  const r = generate();
+  if (!r) { $("#g-out").textContent = ""; $("#g-bits").textContent = "Select at least one character set."; return; }
+  $("#g-out").textContent = r.pw;
+  $("#g-bits").textContent = "About " + r.bits + " bits of entropy (" + rating(r.bits) + "). Generated with the browser’s cryptographic random source.";
+}
+function openGen(target) {
+  st.genTarget = target || null;
+  $("#g-use").hidden = !target;
+  refreshGen();
+  $("#gd").showModal();
+}
+$("#gen").addEventListener("click", () => openGen(null));
+$("#f-gen").addEventListener("click", () => openGen((pw) => {
+  $("#f-pass").value = pw;
+  $("#f-pass").type = "text";
+  $("#f-show").checked = true;
+  strength();
+}));
+["#g-len", "#g-lower", "#g-upper", "#g-digit", "#g-symbol", "#g-noamb"].forEach((s) => $(s).addEventListener("input", refreshGen));
+$("#g-again").addEventListener("click", refreshGen);
+$("#g-copy").addEventListener("click", () => copy($("#g-out").textContent, "Generated password"));
+$("#g-use").addEventListener("click", () => {
+  const pw = $("#g-out").textContent;
+  if (pw && st.genTarget) st.genTarget(pw);
+  $("#gd").close();
+});
+$("#g-close").addEventListener("click", () => $("#gd").close());
+$("#gd").addEventListener("close", () => { $("#g-out").textContent = ""; st.genTarget = null; });
+
+/* ---------- export, change master password, delete ---------- */
+$("#export").addEventListener("click", () => {
+  if (!st.blob) { say("Nothing to export yet.", true); return; }
+  const url = URL.createObjectURL(new Blob([JSON.stringify(st.blob, null, 2)], { type: "application/json" }));
+  const a = h("a", { href: url, download: "vault-backup-" + new Date().toISOString().slice(0, 10) + ".json" });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  say("Encrypted backup downloaded. It is only readable with your master password.");
+});
+
+$("#chmp").addEventListener("click", () => {
+  ["#cm-old", "#cm-new", "#cm-new2"].forEach((s) => ($(s).value = ""));
+  $("#cm-msg").textContent = "";
+  $("#cm").showModal();
+  $("#cm-old").focus();
+});
+$("#cm-cancel").addEventListener("click", () => $("#cm").close());
+$("#cm").addEventListener("close", () => { ["#cm-old", "#cm-new", "#cm-new2"].forEach((s) => ($(s).value = "")); });
+$("#cm-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const btn = $("#cm-go");
+  btn.disabled = true;
+  $("#cm-msg").textContent = "Working. Key derivation takes a moment.";
+  try {
+    try { await openBlob(st.blob, $("#cm-old").value); }
+    catch (e) { throw new Error("Current master password is incorrect."); }
+    const nw = $("#cm-new").value;
+    if (nw.length < 12) throw new Error("Use at least 12 characters.");
+    if (nw !== $("#cm-new2").value) throw new Error("The new passwords do not match.");
+    st.salt = crypto.getRandomValues(new Uint8Array(16));
+    st.iter = ITER;
+    st.key = await deriveKey(nw, st.salt, ITER);
+    const ok = await seal();
+    $("#cm").close();
+    say(ok ? "Master password changed. Older backups still need the old password." : "Changed in memory only. Browser storage failed; export a backup now.", !ok);
+  } catch (err) {
+    $("#cm-msg").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("#lockbtn").addEventListener("click", () => lock());
+$("#wipe").addEventListener("click", () => {
+  if (!confirm("Permanently delete the vault from this browser? Export a backup first if you may need it.")) return;
+  try { localStorage.removeItem(STORE); } catch (e) { /* ignore */ }
+  st.blob = null;
+  lock("Vault deleted from this browser.");
+});
+
+/* ---------- start ---------- */
+if (!window.crypto || !crypto.subtle) {
+  $("#lock").hidden = true;
+  say("This browser does not expose the Web Crypto API (Application Programming Interface) here. Open the file in a current browser.", true);
+} else {
+  showLock();
+}
+</script>
+</body>
+</html>
