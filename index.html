@@ -8,39 +8,53 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --green: #39ff6a;
-    --dim: #a0a0a0;
-    --bg: #0d0d0d;
-    --card: #111111;
-    --border: #1e1e1e;
-    --text: #e0e0e0;
+    --green: #0b7a3b;        /* darker green for contrast on white */
+    --green-soft: #e8f6ee;
+    --green-border: #bfe3cc;
+    --muted: #555555;        /* secondary text, 7:1 contrast on white */
+    --bg: #ffffff;
+    --card: #f7f7f7;
+    --border: #e2e2e2;
+    --text: #1a1a1a;
+    --heading: #000000;
   }
+
+  html { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 16px;
     line-height: 1.7;
-    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Content is centred in a comfortable reading column (about 760px) while
+     section borders still run the full width of the page. */
+  header, section, footer {
+    padding-left: max(1.5rem, calc(50% - 380px));
+    padding-right: max(1.5rem, calc(50% - 380px));
   }
 
   header {
-    padding: 3rem 2rem 2rem;
+    padding-top: 3rem;
+    padding-bottom: 2rem;
     border-bottom: 1px solid var(--border);
   }
 
   .prompt {
     color: var(--green);
-    font-size: 13px;
+    font-size: 14px;
     margin-bottom: 0.5rem;
   }
 
   h1 {
-    font-size: 2rem;
-    font-weight: normal;
-    color: #ffffff;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: bold;
+    color: var(--heading);
     letter-spacing: -0.5px;
+    line-height: 1.25;
   }
 
   h1 span {
@@ -48,44 +62,48 @@
   }
 
   .tagline {
-    color: var(--dim);
-    font-size: 13px;
+    color: var(--muted);
+    font-size: 15px;
     margin-top: 0.5rem;
   }
 
   nav {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.25rem;
     margin-top: 1.5rem;
     flex-wrap: wrap;
   }
 
   nav a {
-    color: var(--dim);
-    text-decoration: none;
-    font-size: 13px;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-size: 15px;
+    padding: 2px 0;
     transition: color 0.2s;
   }
 
   nav a:hover { color: var(--green); }
 
   section {
-    padding: 2.5rem 2rem;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
     border-bottom: 1px solid var(--border);
   }
 
   .section-label {
     color: var(--green);
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: bold;
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 1.25rem;
   }
 
   .about-text {
-    color: var(--dim);
-    max-width: 560px;
-    font-size: 14px;
+    color: var(--text);
+    max-width: 60ch;
+    font-size: 16px;
   }
 
   .about-text p + p { margin-top: 0.75rem; }
@@ -101,37 +119,40 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.75rem 1rem;
-    font-size: 13px;
-    color: var(--dim);
+    font-size: 15px;
+    color: var(--text);
   }
 
   .cert-item::before {
     content: '✓ ';
     color: var(--green);
+    font-weight: bold;
   }
 
   .project-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
 
   .project-card {
     background: var(--card);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--green);
     border-radius: 4px;
     padding: 1rem 1.25rem;
   }
 
   .project-title {
-    color: #ffffff;
-    font-size: 14px;
+    color: var(--heading);
+    font-size: 16px;
+    font-weight: bold;
     margin-bottom: 4px;
   }
 
   .project-desc {
-    color: var(--dim);
-    font-size: 13px;
+    color: var(--muted);
+    font-size: 15px;
   }
 
   .project-tags {
@@ -142,53 +163,79 @@
   }
 
   .tag {
-    background: #1a1a1a;
-    border: 1px solid var(--border);
+    background: var(--green-soft);
+    border: 1px solid var(--green-border);
     color: var(--green);
-    font-size: 11px;
+    font-size: 13px;
     padding: 2px 8px;
-    border-radius: 2px;
+    border-radius: 3px;
   }
 
   .stack-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+
+  .pill-link {
+    text-decoration: none;
+    border-radius: 3px;
   }
 
   .stack-pill {
+    display: inline-block;
     background: var(--card);
     border: 1px solid var(--border);
-    color: var(--dim);
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 2px;
+    color: var(--text);
+    font-size: 15px;
+    padding: 6px 14px;
+    border-radius: 3px;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .pill-link:hover .stack-pill {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-soft);
   }
 
   .contact-links {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .contact-links a {
-    color: var(--dim);
-    text-decoration: none;
-    font-size: 13px;
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--border);
+    font-size: 15px;
+    width: fit-content;
     transition: color 0.2s;
   }
 
-  .contact-links a:hover { color: var(--green); }
+  .contact-links a:hover { color: var(--green); text-decoration-color: var(--green); }
 
   .contact-links span {
     color: var(--green);
     margin-right: 8px;
+    font-weight: bold;
+  }
+
+  /* Visible keyboard focus for every interactive element */
+  a:focus-visible {
+    outline: 3px solid var(--green);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 
   footer {
-    padding: 1.5rem 2rem;
-    color: #3a3a3a;
-    font-size: 12px;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    color: var(--muted);
+    font-size: 14px;
   }
 
   .cursor {
@@ -203,13 +250,21 @@
 
   @keyframes blink {
     50% { opacity: 0; }
-  
-   .stack-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 1rem;
-}
+  }
+
+  /* Respect users who ask for less motion */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .cursor { animation: none; }
+    * { transition: none !important; }
+  }
+
+  /* Small screens: tighten padding */
+  @media (max-width: 600px) {
+    header, section, footer {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
   }
 </style>
 </head>
@@ -217,9 +272,9 @@
 
 <header>
   <div class="prompt">~/portfolio $</div>
-  <h1>John Leigh Samson<span class="cursor"></span></h1>
+  <h1>John Leigh Samson<span class="cursor" aria-hidden="true"></span></h1>
   <p class="tagline"></p>
-  <nav>
+  <nav aria-label="Main">
     <a href="#about">about</a>
     <a href="#projects">projects</a>
     <a href="#stack">tools</a>
@@ -231,7 +286,7 @@
 <section id="about">
   <div class="section-label">// about</div>
   <div class="about-text">
-    <p>Reticent & Taciturn; Hardworker </p>
+    <p>Reticent & Taciturn; Hardworker</p>
   </div>
 </section>
 <!--
@@ -248,10 +303,10 @@
 
     <div class="project-card">
       <div class="project-title">Mobile Forensics Analysis</div>
-      <div class="project-desc"> MVT (Mobile Verification Toolkit).</div>
+      <div class="project-desc">MVT (Mobile Verification Toolkit).</div>
       <div class="project-tags">
         <span class="tag">MVT</span>
-        <span class="tag">MITRE ATT&CK</span>
+        <span class="tag">MITRE ATT&amp;CK</span>
         <span class="tag">T1426</span>
         <span class="tag">T1512</span>
         <span class="tag">iOS · Android</span>
@@ -259,7 +314,7 @@
     </div>
 
     <div class="project-card">
-      <div class="project-title">wireless WPA handshake test</div>
+      <div class="project-title">Wireless WPA Handshake Test</div>
       <div class="project-desc">aircrack-ng</div>
       <div class="project-tags">
         <span class="tag">tshark</span>
@@ -286,7 +341,7 @@
 </section>
 
 <section id="stack">
-  <div class="section-label">// tools & stack</div>
+  <div class="section-label">// tools &amp; stack</div>
   <div class="stack-list">
     <a href="https://jlsamson.tech/password_generator.html" class="pill-link">
       <span class="stack-pill">Password Generator</span>
@@ -303,33 +358,33 @@
     <a href="https://jlsamson.tech/workout_timer.html" class="pill-link">
       <span class="stack-pill">Workout Timer</span>
     </a>
-   
-   <a href="https://jlsamson.tech/local-vault" class="pill-link">
-    <span class="stack-pill">password manager</span>
+
+    <a href="https://jlsamson.tech/local-vault" class="pill-link">
+      <span class="stack-pill">Password Manager</span>
     </a>
 
     <a href="https://jlsamson.tech/opcen" class="pill-link">
-    <span class="stack-pill">opcen</span>
+      <span class="stack-pill">Opcen</span>
     </a>
-   
-<a href="https://jlsamson.tech/Order%20of%20Operations%20Solver.html" class="pill-link">
-    <span class="stack-pill">Operations Solver</span>
+
+    <a href="https://jlsamson.tech/Order%20of%20Operations%20Solver.html" class="pill-link">
+      <span class="stack-pill">Operations Solver</span>
     </a>
-   
+
   </div>
 </section>
 
 <section id="contact">
   <div class="section-label">// contact</div>
   <div class="contact-links">
-    <a href="https://www.linkedin.com/in/johnleighsamson" target="_blank"><span>→</span> LinkedIn</a>
-    <a href="mailto:samsonjohnleigh@gmail.com" target="_blank"><span>→</span> Email</a>
-    <a href="https://smp10.simplex.im/a#NNitDjVfvU1K0xwh--eGumUWdUgGpRzuNhUQldOMNtY" target="_blank"><span>→</span> SimpleX</a>
+    <a href="https://www.linkedin.com/in/johnleighsamson" target="_blank" rel="noopener noreferrer"><span>→</span> LinkedIn</a>
+    <a href="mailto:samsonjohnleigh@gmail.com"><span>→</span> Email</a>
+    <a href="https://smp10.simplex.im/a#NNitDjVfvU1K0xwh--eGumUWdUgGpRzuNhUQldOMNtY" target="_blank" rel="noopener noreferrer"><span>→</span> SimpleX</a>
   </div>
 </section>
 
 <footer>
-  <p>&copy;built with github pages</p>
+  <p>&copy; Built with GitHub Pages</p>
 </footer>
 
 </body>
