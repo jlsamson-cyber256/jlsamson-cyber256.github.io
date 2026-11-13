@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Order of Operations Solver</title>
+<style>
+:root{--bg:#fff;--fg:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--hl:#ffe58a;--err:#b00020;
+--sans:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+--mono:Hack,"SF Mono",Menlo,Consolas,monospace;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111;--fg:#f2f2f4;--muted:#9a9aa1;--line:#3a3a3f;--hl:#5c4b00;--err:#ff6b81;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111;--fg:#f2f2f4;--muted:#9a9aa1;--line:#3a3a3f;--hl:#5c4b00;--err:#ff6b81;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:1.6rem;font-weight:600;margin:0 0 4px}
+p{margin:0 0 12px}
+.muted{color:var(--muted);font-size:.9rem}
+.row{display:flex;gap:8px;margin:20px 0 10px}
+input[type=text]{flex:1;min-width:0;font:1.1rem var(--mono);padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+button{font:inherit;padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}
+.chips button{font:.85rem var(--mono);padding:4px 8px}
+.seg{display:flex;gap:6px;align-items:center;margin-bottom:12px}
+section{border-top:1px solid var(--line);padding-top:12px;margin-top:20px}
+h2{font-size:1rem;font-weight:600;margin:0 0 8px}
+.mono{font-family:var(--mono)}
+mark{background:var(--hl);color:inherit;padding:0 2px;border-radius:3px}
+ol{list-style:none;margin:0;padding:0}
+li{padding:10px 0;border-bottom:1px solid var(--line)}
+.ex{font-family:var(--mono);overflow-x:auto;white-space:nowrap}
+.dt{font-family:var(--mono);color:var(--muted);font-size:.9rem}
+.lab{font-size:.85rem;color:var(--muted)}
+.ans{font:600 1.6rem var(--mono);overflow-x:auto}
+.err{color:var(--err)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem;min-width:100%}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<main>
+<h1>Order of Operations Solver</h1>
+<p class="muted">Type an arithmetic expression. Every operation is carried out one at a time, in the correct order, and shown in succession.</p>
+
+<div class="row">
+<input id="in" type="text" value="8 + 2 × (3 + 4)^2 − 10 ÷ 5" autocomplete="off" spellcheck="false" aria-label="Expression">
+<button id="go">Solve</button>
+</div>
+<div class="chips" id="ex"></div>
+<div class="seg"><span class="muted">Naming:</span>
+<button id="m0" aria-pressed="true">PEMDAS</button>
+<button id="m1" aria-pressed="false">BODMAS</button>
+</div>
+
+<div id="out"></div>
+
+<section>
+<h2>The rank table</h2>
+<div class="tw"><table>
+<tr><th>Rank</th><th>PEMDAS</th><th>BODMAS</th></tr>
+<tr><td>1</td><td>Parentheses</td><td>Brackets</td></tr>
+<tr><td>2</td><td>Exponents</td><td>Orders (powers and roots)</td></tr>
+<tr><td>3</td><td>Multiplication and Division, left to right</td><td>Division and Multiplication, left to right</td></tr>
+<tr><td>4</td><td>Addition and Subtraction, left to right</td><td>Addition and Subtraction, left to right</td></tr>
+</table></div>
+<p class="muted" style="margin-top:12px">PEMDAS stands for Parentheses, Exponents, Multiplication, Division, Addition, Subtraction. BODMAS stands for Brackets, Orders, Division, Multiplication, Addition, Subtraction. They are two names for one rule, so both always give the same answer. Operations on the same rank run strictly left to right, except exponents, which run right to left (2^3^2 = 2^9). The label &ldquo;BOMDAS&rdquo; is not a standard acronym; BODMAS is the one to use.</p>
+<p class="muted">Accepted input: numbers, + − × ÷ * / ^ **, and (), [], {} as grouping. A number touching a bracket, such as 2(3+4), is treated as ordinary multiplication at rank 3, not as a tighter bond. A minus sign applies after exponents, so −2^2 = −4.</p>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const LAB = {
+  P: ["Parentheses", "Brackets"],
+  E: ["Exponents", "Orders"],
+  MD: ["Multiplication / Division, left to right", "Division / Multiplication, left to right"],
+  AS: ["Addition / Subtraction, left to right", "Addition / Subtraction, left to right"],
+  N: ["Unary minus (sign)", "Unary minus (sign)"]
+};
+const EXAMPLES = ["8 + 2 × (3 + 4)^2 − 10 ÷ 5", "6 ÷ 2 × (1 + 2)", "−2^2 + 3 × [4 − (1 + 1)]", "100 − 4^2 ÷ 8 × 3", "2^3^2", "((2 + 3) × (4 − 1))^2"];
+let mode = 0, state = null;
+
+const fmt = v => String(parseFloat(v.toPrecision(12)));
+
+function tokenize(src) {
+  const s = src.replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-")
+    .replace(/\*\*/g, "^").replace(/[\[{]/g, "(").replace(/[\]}]/g, ")").replace(/\s+/g, "");
+  if (!s) throw Error("Type an expression first.");
+  const re = /\d+\.?\d*|\.\d+|[-+*/^()]/y, raw = [];
+  while (re.lastIndex < s.length) {
+    const i = re.lastIndex, m = re.exec(s);
+    if (!m) throw Error("Unsupported character: " + s[i]);
+    raw.push(m[0]);
+  }
+  const isNum = x => x !== undefined && /^[\d.]/.test(x);
+  const out = []; let depth = 0;
+  for (let k = 0; k < raw.length; k++) {
+    const x = raw[k], prev = out[out.length - 1];
+    const prevVal = prev && (prev.t === "n" || prev.t === ")");
+    if (isNum(x)) {
+      if (prevVal) out.push({ t: "o", v: "*" });
+      out.push({ t: "n", v: parseFloat(x) });
+    } else if (x === "(") {
+      depth++;
+      if (prevVal) out.push({ t: "o", v: "*" });
+      out.push({ t: "(" });
+    } else if (x === ")") {
+      if (--depth < 0) throw Error("Unbalanced parentheses.");
+      out.push({ t: ")" });
+    } else if ((x === "-" || x === "+") && (!prev || prev.t === "o" || prev.t === "(")) {
+      if (x === "-") {
+        if (prev && prev.v === "^" && isNum(raw[k + 1])) { out.push({ t: "n", v: -parseFloat(raw[k + 1]) }); k++; }
+        else out.push({ t: "o", v: "neg" });
+      }
+    } else out.push({ t: "o", v: x });
+  }
+  if (depth !== 0) throw Error("Unbalanced parentheses.");
+  return out;
+}
+
+function show(T, lo, hi) {
+  let h = "";
+  T.forEach((x, i) => {
+    const s = x.t === "n" ? fmt(x.v) : x.t === "o" ? ({ "*": "×", "/": "÷", "-": "−", neg: "−" }[x.v] || x.v) : x.t;
+    const p = T[i - 1];
+    const gap = i > 0 && p.t !== "(" && !(p.t === "o" && p.v === "neg") && x.t !== ")";
+    h += (gap ? " " : "") + (i === lo ? "<mark>" : "") + s + (i === hi ? "</mark>" : "");
+  });
+  return h;
+}
+
+function nextStep(T) {
+  let r = T.findIndex(x => x.t === ")"), l = -1;
+  if (r < 0) r = T.length;
+  else { for (l = r - 1; l >= 0 && T[l].t !== "("; l--); if (l < 0) throw Error("Unbalanced parentheses."); }
+  const b = l + 1, A = T.slice(b, r);
+  if (!A.length) throw Error("Empty parentheses.");
+  if (l >= 0 && A.length === 1 && A[0].t === "n")
+    return { key: "P", lo: l, hi: r, detail: "( " + fmt(A[0].v) + " ) = " + fmt(A[0].v), next: T.slice(0, l).concat(A, T.slice(r + 1)) };
+  const op = (i, s) => A[i] && A[i].t === "o" && s.includes(A[i].v);
+  const num = i => A[i] && A[i].t === "n";
+  const done = (i0, i1, v, key, detail) => ({ key, lo: b + i0, hi: b + i1, detail,
+    next: T.slice(0, b + i0).concat([{ t: "n", v }], T.slice(b + i1 + 1)) });
+  const neg = i => { const v = -A[i + 1].v; return done(i, i + 1, v, "N", "\u2212" + fmt(A[i + 1].v) + " = " + fmt(v)); };
+  const bin = (i, key) => {
+    const x = A[i - 1].v, y = A[i + 1].v, o = A[i].v; let v;
+    if (o === "^") v = Math.pow(x, y);
+    else if (o === "*") v = x * y;
+    else if (o === "/") { if (y === 0) throw Error("Division by zero."); v = x / y; }
+    else if (o === "+") v = x + y; else v = x - y;
+    if (!isFinite(v)) throw Error("Result is undefined or too large.");
+    const sym = { "*": "×", "/": "÷", "-": "−" }[o] || o;
+    return done(i - 1, i + 1, v, key, fmt(x) + " " + sym + " " + fmt(y) + " = " + fmt(v));
+  };
+  let i;
+  for (i = 0; i < A.length; i++) if (op(i, ["neg"]) && num(i + 1) && op(i - 1, ["^"])) return neg(i);
+  for (i = A.length - 1; i >= 0; i--) if (op(i, ["^"]) && num(i - 1) && num(i + 1)) return bin(i, "E");
+  for (i = 0; i < A.length; i++) if (op(i, ["neg"]) && num(i + 1)) return neg(i);
+  for (i = 0; i < A.length; i++) if (op(i, ["*", "/"]) && num(i - 1) && num(i + 1)) return bin(i, "MD");
+  for (i = 0; i < A.length; i++) if (op(i, ["+", "-"]) && num(i - 1) && num(i + 1)) return bin(i, "AS");
+  throw Error("This expression is not valid. Check the operators and brackets.");
+}
+
+function solve(src) {
+  let T = tokenize(src);
+  const first = show(T, -1, -1), steps = [];
+  while (!(T.length === 1 && T[0].t === "n")) {
+    if (steps.length > 300) throw Error("Too many steps.");
+    const s = nextStep(T);
+    steps.push({ key: s.key, html: show(T, s.lo, s.hi), detail: s.detail });
+    T = s.next;
+  }
+  return { first, steps, answer: fmt(T[0].v) };
+}
+
+function render() {
+  const o = $("out");
+  if (!state) { o.innerHTML = ""; return; }
+  if (state.error) { o.innerHTML = '<section><p class="err">' + state.error + "</p></section>"; return; }
+  let h = '<section><h2>Input interpretation</h2><div class="ex">' + state.first + "</div></section>";
+  h += '<section><h2>Result</h2><div class="ans">' + state.answer + "</div></section>";
+  h += "<section><h2>Step-by-step solution (" + (mode ? "BODMAS" : "PEMDAS") + ")</h2>";
+  if (!state.steps.length) h += '<p class="muted">Nothing to simplify. This is already a single number.</p>';
+  else {
+    h += "<ol>";
+    state.steps.forEach((s, i) => {
+      h += '<li><div class="lab">Step ' + (i + 1) + ": " + LAB[s.key][mode] + '</div><div class="ex">' + s.html + '</div><div class="dt">' + s.detail + "</div></li>";
+    });
+    h += "</ol>";
+  }
+  o.innerHTML = h + "</section>";
+}
+
+function run() {
+  try { state = solve($("in").value); }
+  catch (e) { state = { error: e.message }; }
+  render();
+}
+
+function setMode(m) {
+  mode = m;
+  $("m0").setAttribute("aria-pressed", String(m === 0));
+  $("m1").setAttribute("aria-pressed", String(m === 1));
+  render();
+}
+
+EXAMPLES.forEach(t => {
+  const b = document.createElement("button");
+  b.textContent = t;
+  b.addEventListener("click", () => { $("in").value = t; run(); });
+  $("ex").appendChild(b);
+});
+$("go").addEventListener("click", run);
+$("in").addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+$("m0").addEventListener("click", () => setMode(0));
+$("m1").addEventListener("click", () => setMode(1));
+run();
+</script>
+</body>
+</html>
