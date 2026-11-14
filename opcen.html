@@ -74,7 +74,7 @@ tick();setInterval(tick,1000);
 /* helpers */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl=u=>/^https?:\/\//i.test(u||"")?u:"#";
-const parseDate=s=>{if(!s)return null;const d=new Date(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(s)?s.replace(" ","T")+"Z":s);return isNaN(d)?null:d}; /* rss2json dates are UTC without a zone marker */
+const parseDate=s=>{if(!s)return null;const d=new Date(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(s)?s.replace(" ","T")+"Z":s);return isNaN(d)?null:d};
 const ago=d=>{if(!d)return"";const m=Math.floor((Date.now()-d)/60000);return m<1?"just now":m<60?m+"m ago":m<1440?Math.floor(m/60)+"h ago":Math.floor(m/1440)+"d ago"};
 const state=(id,s)=>{const p=$("p-"+id);p.dataset.s=s;p.querySelector(".st").textContent=s};
 async function fetchT(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),TIMEOUT);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
@@ -105,7 +105,7 @@ function show(id,items,failed){
   items.slice(0,3).forEach(x=>{if(x.l&&!seen.has(x.l)){seen.add(x.l);strip.push(`<span><b>[${esc(x.s)}]</b> ${esc(x.t)}</span>`)}});
 }
 
-/* USGS (United States Geological Survey) significant earthquakes, past week */
+/* USGS earthquakes */
 async function quakes(){
   try{
     const r=await fetchT("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson");
@@ -136,20 +136,31 @@ async function weather(){
   <div><span>Humidity:</span> ${v(c.relative_humidity_2m)}%</div><div><span>Rain now:</span> ${v(c.precipitation)} mm</div>
   <div><span>Sunrise:</span> ${hm(d&&d.sunrise[0])}</div><div><span>Sunset:</span> ${hm(d&&d.sunset[0])}</div></div>`:'<div class="err">Weather metrics unavailable.</div>')+'<div id="map"></div>';
   state("weather",c?"live":"offline");
+  
   if(map){map.remove();map=null}
   if(typeof L==="undefined"){$("map").outerHTML='<div class="err">Map library did not load.</div>';return}
+  
   map=L.map("map").setView([lat,lon],7);
- L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-}).addTo(map);
-    const r=await fetchT("https://api.rainviewer.com/public/weather-maps.json"),j=await r.json(),past=j.radar&&j.radar.past;
-    if(past&&past.length)L.tileLayer((j.host||"https://tilecache.rainviewer.com")+past[past.length-1].path+"/256/{z}/{x}/{y}/2/1_1.png",{opacity:.6,maxZoom:18,attribution:"RainViewer"}).addTo(map);
-  }catch(e){console.warn("Radar overlay unavailable:",e.message)}
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  }).addTo(map);
+
+  try {
+    const r=await fetchT("https://api.rainviewer.com/public/weather-maps.json");
+    const j=await r.json();
+    const past=j.radar&&j.radar.past;
+    if(past&&past.length) {
+      L.tileLayer((j.host||"https://tilecache.rainviewer.com")+past[past.length-1].path+"/256/{z}/{x}/{y}/2/1_1.png",{opacity:.6,maxZoom:18,attribution:"RainViewer"}).addTo(map);
+    }
+  } catch(e) {
+    console.warn("Radar overlay unavailable:",e.message);
+  }
+
   L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:2,fillColor:"#0071e3",fillOpacity:.9}).addTo(map).bindPopup(`<b>${esc(name)}</b><br>${c?v(c.temperature_2m)+"°C, "+v(c.wind_speed_10m)+" km/h wind":"No metrics"}`);
   setTimeout(()=>map&&map.invalidateSize(),200);
 }
+
 $("geo").onclick=()=>{
   if(!navigator.geolocation)return;
   navigator.geolocation.getCurrentPosition(p=>{loc={lat:p.coords.latitude,lon:p.coords.longitude,name:"Current location"};weather()},()=>{},{timeout:8000});
