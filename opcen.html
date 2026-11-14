@@ -139,8 +139,11 @@ async function weather(){
   if(map){map.remove();map=null}
   if(typeof L==="undefined"){$("map").outerHTML='<div class="err">Map library did not load.</div>';return}
   map=L.map("map").setView([lat,lon],7);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"&copy; OpenStreetMap contributors &copy; CARTO"}).addTo(map);
-  try{ /* rain radar overlay is best-effort */
+ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+}).addTo(map);
     const r=await fetchT("https://api.rainviewer.com/public/weather-maps.json"),j=await r.json(),past=j.radar&&j.radar.past;
     if(past&&past.length)L.tileLayer((j.host||"https://tilecache.rainviewer.com")+past[past.length-1].path+"/256/{z}/{x}/{y}/2/1_1.png",{opacity:.6,maxZoom:18,attribution:"RainViewer"}).addTo(map);
   }catch(e){console.warn("Radar overlay unavailable:",e.message)}
