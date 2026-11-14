@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mathematical Calculator</title>
+<style>
+:root{--bg:#fff;--fg:#1d1d1f;--mut:#6e6e73;--line:#d2d2d7;--card:#f5f5f7;--acc:#0071e3;--err:#c4281c;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1e;--fg:#f5f5f7;--mut:#a1a1a6;--line:#3a3a3c;--card:#2c2c2e;--acc:#0a84ff;--err:#ff6961;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c1c1e;--fg:#f5f5f7;--mut:#a1a1a6;--line:#3a3a3c;--card:#2c2c2e;--acc:#0a84ff;--err:#ff6961;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:600;margin:0 0 4px}
+p.sub{margin:0 0 16px;color:var(--mut);font-size:14px}
+code,input,textarea,pre,.k,select{font-family:Hack,"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+button,select{font-size:15px;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+nav button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+input,textarea{width:100%;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.panel[hidden]{display:none}
+#expr{font-size:18px;padding:12px}
+#res{min-height:2.2em;padding:6px 2px;font-family:Hack,"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:20px;word-break:break-all}
+#res.err{color:var(--err);font-size:14px}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:8px 0}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.pad button{padding:10px 0;font-family:Hack,"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+.pad .eq{grid-column:1/-1;background:var(--acc);border-color:var(--acc);color:#fff}
+pre{margin:10px 0 0;padding:10px;background:var(--card);border-radius:8px;white-space:pre-wrap;word-break:break-word;font-size:14px;min-height:2.5em}
+ul#hist{list-style:none;margin:12px 0 0;padding:0}
+ul#hist li{padding:6px 0;border-top:1px solid var(--line);cursor:pointer;font-family:Hack,"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:14px;word-break:break-all}
+ul#hist span{color:var(--mut)}
+.note{font-size:13px;color:var(--mut);margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>Mathematical Calculator</h1>
+<p class="sub">Expression parser, calculus, algebra, number theory, statistics, base conversion. All arithmetic uses IEEE 754 double precision.</p>
+<nav id="tabs">
+<button data-t="calc" aria-pressed="true">Calculator</button>
+<button data-t="calculus" aria-pressed="false">Calculus</button>
+<button data-t="algebra" aria-pressed="false">Algebra</button>
+<button data-t="nt" aria-pressed="false">Number theory</button>
+<button data-t="stats" aria-pressed="false">Statistics</button>
+<button data-t="base" aria-pressed="false">Bases</button>
+</nav>
+
+<section class="panel" id="calc">
+<input id="expr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="2sin(30)+nCr(5,2)!  or  a=7">
+<div id="res"></div>
+<div class="bar"><span>Angle unit</span>
+<select id="mode"><option value="deg">Degrees</option><option value="rad">Radians</option><option value="grad">Gradians</option></select></div>
+<div class="pad" id="pad"></div>
+<ul id="hist"></ul>
+<p class="note">Operators: + - * / ^ ! %. Implicit multiplication works (2pi, 3(4+1)). Assign variables with name=expression. Use ans for the last result. Functions: sin cos tan asin acos atan atan2 sinh cosh tanh ln log log2 exp sqrt cbrt root abs floor ceil round sign fact gamma nCr nPr gcd lcm mod min max hypot pow deg rad. Constants: pi, e, phi.</p>
+</section>
+
+<section class="panel" id="calculus" hidden>
+<label for="fx">f(x)</label><input id="fx" value="x^2*sin(x)" spellcheck="false">
+<div class="row">
+<div><label for="cx">Point x0 (derivative, root start)</label><input id="cx" value="1"></div>
+<div><label for="ca">Lower bound a</label><input id="ca" value="0"></div>
+<div><label for="cb">Upper bound b</label><input id="cb" value="3.14159265358979"></div>
+</div>
+<div class="bar"><button id="bd">Derivative at x0</button><button id="bi">Integral a to b</button><button id="br">Root near x0</button></div>
+<pre id="o_calculus"></pre>
+<p class="note">Derivative: Richardson-extrapolated central difference. Integral: adaptive Simpson. Root: Newton iteration. Angle unit follows the Calculator tab.</p>
+</section>
+
+<section class="panel" id="algebra" hidden>
+<label>Quadratic ax^2 + bx + c = 0</label>
+<div class="row"><input id="qa" value="1" aria-label="a"><input id="qb" value="2" aria-label="b"><input id="qc" value="5" aria-label="c"></div>
+<div class="bar"><button id="bq">Solve quadratic</button></div>
+<pre id="o_q"></pre>
+<label for="ls">Linear system: one row per equation, coefficients then constant (augmented matrix)</label>
+<textarea id="ls" rows="3">2 1 -1 8
+-3 -1 2 -11
+-2 1 2 -3</textarea>
+<div class="bar"><button id="bl">Solve system</button></div>
+<pre id="o_l"></pre>
+</section>
+
+<section class="panel" id="nt" hidden>
+<div class="row"><div><label for="n1">Integer n</label><input id="n1" value="360"></div><div><label for="n2">Integer m</label><input id="n2" value="84"></div></div>
+<div class="bar"><button id="bn">Analyze</button></div>
+<pre id="o_nt"></pre>
+</section>
+
+<section class="panel" id="stats" hidden>
+<label for="sd">Data (separated by spaces, commas or semicolons)</label>
+<textarea id="sd" rows="3">4 8 15 16 23 42</textarea>
+<div class="bar"><button id="bs">Compute</button></div>
+<pre id="o_s"></pre>
+</section>
+
+<section class="panel" id="base" hidden>
+<div class="row"><div><label for="bv">Value</label><input id="bv" value="255"></div><div><label for="bf">From base (2 to 36)</label><input id="bf" value="10"></div></div>
+<div class="bar"><button id="bb">Convert</button></div>
+<pre id="o_b"></pre>
+</section>
+</main>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+let mode="deg";
+const vars={ans:0,M:0};
+const C={pi:Math.PI,e:Math.E,phi:(1+Math.sqrt(5))/2};
+const toRad=v=>mode==="deg"?v*Math.PI/180:mode==="grad"?v*Math.PI/200:v;
+const fromRad=v=>mode==="deg"?v*180/Math.PI:mode==="grad"?v*200/Math.PI:v;
+const snap=v=>Math.abs(v)<1e-15?0:v;
+function gamma(z){
+  if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));
+  z-=1;
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  let x=c[0];for(let i=1;i<9;i++)x+=c[i]/(z+i);
+  const t=z+7.5;
+  return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;
+}
+function fact(n){
+  if(Number.isInteger(n)){
+    if(n<0)throw Error("factorial undefined for negative integers");
+    if(n>170)return Infinity;
+    let r=1;for(let i=2;i<=n;i++)r*=i;return r;
+  }
+  return gamma(n+1);
+}
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a};
+const lcm=(a,b)=>a&&b?Math.abs(a/gcd(a,b)*b):0;
+const nPr=(n,k)=>{if(k<0||k>n)return 0;let r=1;for(let i=0;i<k;i++)r*=n-i;return r};
+const nCr=(n,k)=>{if(k<0||k>n)return 0;k=Math.min(k,n-k);let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+const F={
+  sin:x=>snap(Math.sin(toRad(x))),cos:x=>snap(Math.cos(toRad(x))),tan:x=>snap(Math.tan(toRad(x))),
+  asin:x=>fromRad(Math.asin(x)),acos:x=>fromRad(Math.acos(x)),atan:x=>fromRad(Math.atan(x)),
+  atan2:(y,x)=>fromRad(Math.atan2(y,x)),
+  sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,
+  ln:Math.log,log:Math.log10,log2:Math.log2,exp:Math.exp,
+  sqrt:Math.sqrt,cbrt:Math.cbrt,abs:Math.abs,floor:Math.floor,ceil:Math.ceil,round:Math.round,sign:Math.sign,
+  root:(x,n)=>x<0&&n%2!==0?-Math.pow(-x,1/n):Math.pow(x,1/n),
+  fact,gamma,nCr,nPr,gcd:(...a)=>a.reduce(gcd),lcm:(...a)=>a.reduce(lcm),
+  mod:(a,b)=>((a%b)+b)%b,min:Math.min,max:Math.max,hypot:Math.hypot,pow:Math.pow,
+  deg:x=>x*180/Math.PI,rad:x=>x*Math.PI/180
+};
+function evaluate(src,env){
+  src=src.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/π/g," pi ").replace(/√/g," sqrt ");
+  const re=/\s*(\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|[A-Za-z_]\w*|[-+*\/^(),!%])/y;
+  const t=[];let m,last=0;
+  while(last<src.length&&(re.lastIndex=last,m=re.exec(src))){t.push(m[1]);last=re.lastIndex}
+  const rest=src.slice(last).trim();
+  if(rest)throw Error('unexpected character "'+rest[0]+'"');
+  if(!t.length)throw Error("empty expression");
+  let i=0;
+  const peek=()=>t[i],next=()=>t[i++];
+  const isNum=s=>s!==undefined&&/^[\d.]/.test(s),isId=s=>s!==undefined&&/^[A-Za-z_]/.test(s);
+  function expr(){let v=term();while(peek()==="+"||peek()==="-"){const o=next(),r=term();v=o==="+"?v+r:v-r}return v}
+  function term(){
+    let v=unary();
+    for(;;){
+      const p=peek();
+      if(p==="*"){next();v*=unary()}
+      else if(p==="/"){next();v/=unary()}
+      else if(isNum(p)||isId(p)||p==="("){v*=power()}
+      else break;
+    }
+    return v;
+  }
+  function unary(){
+    if(peek()==="-"){next();return -unary()}
+    if(peek()==="+"){next();return unary()}
+    return power();
+  }
+  function power(){const b=post();if(peek()==="^"){next();return Math.pow(b,unary())}return b}
+  function post(){
+    let v=prim();
+    for(;;){
+      if(peek()==="!"){next();v=fact(v)}
+      else if(peek()==="%"){next();v/=100}
+      else break;
+    }
+    return v;
+  }
+  function prim(){
+    const k=next();
+    if(k===undefined)throw Error("unexpected end of expression");
+    if(isNum(k))return parseFloat(k);
+    if(k==="("){const v=expr();if(next()!==")")throw Error("missing )");return v}
+    if(isId(k)){
+      const lk=k.toLowerCase();
+      if(peek()==="("){
+        next();const a=[];
+        if(peek()!==")"){do{a.push(expr())}while(peek()===","&&next())}
+        if(next()!==")")throw Error("missing )");
+        const f=F[k]||F[lk];
+        if(!f)throw Error("unknown function "+k);
+        return f(...a);
+      }
+      if(k in env)return env[k];
+      if(lk in C)return C[lk];
+      throw Error("unknown symbol "+k);
+    }
+    throw Error('unexpected "'+k+'"');
+  }
+  const v=expr();
+  if(i<t.length)throw Error('unexpected "'+t[i]+'"');
+  if(typeof v!=="number"||Number.isNaN(v))throw Error("result is undefined");
+  return v;
+}
+const fmt=v=>!isFinite(v)?(v>0?"Infinity":"-Infinity"):String(Number(v.toPrecision(12)));
+function run(src){
+  const m=src.match(/^\s*([A-Za-z_]\w*)\s*=(?!=)\s*(.+)$/);
+  if(m){
+    const n=m[1];
+    if(n in F||n.toLowerCase() in C||n==="ans")throw Error('"'+n+'" is reserved');
+    const v=evaluate(m[2],vars);vars[n]=v;return v;
+  }
+  return evaluate(src,vars);
+}
+
+/* Calculator tab */
+const keys=[["7"],["8"],["9"],["÷","/"],["("],[")"],["4"],["5"],["6"],["×","*"],["sin","sin("],["asin","asin("],
+["1"],["2"],["3"],["−","-"],["cos","cos("],["acos","acos("],["0"],["."],["ans"],["+"],["tan","tan("],["atan","atan("],
+["π","pi"],["e"],["^"],["!"],["%"],[","],["ln","ln("],["log","log("],["√","sqrt("],["abs","abs("],["n!","fact("],["nCr","nCr("],
+["MC","@mc"],["MR","@mr"],["M+","@m+"],["M−","@m-"],["⌫","@del"],["C","@c"]];
+const pad=$("#pad"),ex=$("#expr"),res=$("#res"),hist=$("#hist");
+keys.forEach(([l,v])=>{const b=document.createElement("button");b.textContent=l;b.dataset.v=v||l;pad.appendChild(b)});
+const eq=document.createElement("button");eq.textContent="=";eq.className="eq";eq.dataset.v="@eq";pad.appendChild(eq);
+const H=[];
+function show(msg,err){res.textContent=msg;res.className=err?"err":""}
+function preview(){
+  const s=ex.value;
+  if(!s.trim()||/^\s*[A-Za-z_]\w*\s*=(?!=)/.test(s)){show("");return}
+  try{show("= "+fmt(evaluate(s,vars)))}catch(e){show(e.message,true)}
+}
+function commit(){
+  const s=ex.value;if(!s.trim())return;
+  try{
+    const v=run(s);vars.ans=v;
+    H.unshift([s,fmt(v)]);if(H.length>15)H.pop();
+    show("= "+fmt(v));drawHist();
+  }catch(e){show(e.message,true)}
+}
+function drawHist(){
+  hist.textContent="";
+  H.forEach(([s,r])=>{
+    const li=document.createElement("li");
+    li.append(s+" ");const sp=document.createElement("span");sp.textContent="= "+r;li.appendChild(sp);
+    li.onclick=()=>{ex.value=r;ex.focus();preview()};
+    hist.appendChild(li);
+  });
+}
+function press(v){
+  if(v==="@eq")return commit();
+  if(v==="@c"){ex.value="";show("");return}
+  if(v==="@del"){ex.value=ex.value.slice(0,-1);return preview()}
+  if(v==="@mc"){vars.M=0;return show("memory cleared")}
+  if(v==="@mr"){ex.value+="M";return preview()}
+  if(v==="@m+"||v==="@m-"){vars.M+=(v==="@m+"?1:-1)*vars.ans;return show("M = "+fmt(vars.M))}
+  ex.value+=v;preview();
+}
+pad.addEventListener("click",e=>{const b=e.target.closest("button");if(b){press(b.dataset.v);ex.focus()}});
+ex.addEventListener("input",preview);
+ex.addEventListener("keydown",e=>{if(e.key==="Enter")commit()});
+$("#mode").addEventListener("change",e=>{mode=e.target.value;preview()});
+
+/* Calculus tab */
+const val=id=>evaluate($(id).value,vars);
+function fn(){const s=$("#fx").value;return x=>evaluate(s,{...vars,x})}
+function out(id,fnc){try{$(id).textContent=fnc()}catch(e){$(id).textContent="Error: "+e.message}}
+function deriv(f,x){
+  const h=1e-3*Math.max(1,Math.abs(x)),d=k=>(f(x+k)-f(x-k))/(2*k);
+  return (4*d(h/2)-d(h))/3;
+}
+function simpson(f,a,b,eps){
+  const rec=(a,b,fa,fb,fc,S,eps,d)=>{
+    const c=(a+b)/2,l=(a+c)/2,r=(c+b)/2,fl=f(l),fr=f(r);
+    const SL=(c-a)/6*(fa+4*fl+fc),SR=(b-c)/6*(fc+4*fr+fb),D=SL+SR-S;
+    if(d<=0||Math.abs(D)<=15*eps)return SL+SR+D/15;
+    return rec(a,c,fa,fc,fl,SL,eps/2,d-1)+rec(c,b,fc,fb,fr,SR,eps/2,d-1);
+  };
+  const c=(a+b)/2,fa=f(a),fb=f(b),fc=f(c);
+  return rec(a,b,fa,fb,fc,(b-a)/6*(fa+4*fc+fb),eps,18);
+}
+$("#bd").onclick=()=>out("#o_calculus",()=>{const f=fn(),x=val("#cx");return "f(x0) = "+fmt(f(x))+"\nf'(x0) = "+fmt(deriv(f,x))});
+$("#bi").onclick=()=>out("#o_calculus",()=>{
+  const f=fn(),a=val("#ca"),b=val("#cb");
+  if(a===b)return "Integral = 0";
+  const s=a<b?1:-1,lo=Math.min(a,b),hi=Math.max(a,b);
+  const v=s*simpson(f,lo,hi,1e-10);
+  if(!isFinite(v))throw Error("integral diverges or f is undefined on the interval");
+  return "Integral from a to b = "+fmt(v);
+});
+$("#br").onclick=()=>out("#o_calculus",()=>{
+  const f=fn();let x=val("#cx"),n=0;
+  for(;n<100;n++){
+    const d=deriv(f,x);
+    if(Math.abs(d)<1e-14)throw Error("derivative is near zero, choose another start");
+    const xn=x-f(x)/d;
+    if(!isFinite(xn))throw Error("iteration diverged");
+    const done=Math.abs(xn-x)<1e-13*Math.max(1,Math.abs(x));x=xn;if(done){n++;break}
+  }
+  const r=f(x);
+  if(Math.abs(r)>1e-8)throw Error("no convergence, residual "+fmt(r));
+  return "Root x = "+fmt(x)+"\nf(x) = "+fmt(r)+"\nIterations: "+n;
+});
+
+/* Algebra tab */
+$("#bq").onclick=()=>out("#o_q",()=>{
+  const a=val("#qa"),b=val("#qb"),c=val("#qc");
+  if(a===0)return b===0?"Not an equation":"Linear: x = "+fmt(-c/b);
+  const D=b*b-4*a*c,s=fmt;
+  let o="Discriminant = "+s(D)+"\n";
+  if(D>=0){const q=-(b+Math.sign(b||1)*Math.sqrt(D))/2;const r1=q/a,r2=q?c/q:r1;o+="x1 = "+s(r1)+"\nx2 = "+s(r2)}
+  else{const re=-b/(2*a),im=Math.sqrt(-D)/(2*Math.abs(a));o+="x1 = "+s(re)+" + "+s(im)+"i\nx2 = "+s(re)+" - "+s(im)+"i"}
+  return o+"\nVertex x = "+s(-b/(2*a));
+});
+$("#bl").onclick=()=>out("#o_l",()=>{
+  const M=$("#ls").value.trim().split("\n").map(r=>r.trim().split(/[\s,;]+/).map(Number));
+  const n=M.length;
+  if(M.some(r=>r.length!==n+1||r.some(Number.isNaN)))throw Error("need n rows with n+1 numeric columns");
+  for(let c=0;c<n;c++){
+    let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;
+    if(Math.abs(M[p][c])<1e-12)throw Error("matrix is singular or nearly singular");
+    [M[c],M[p]]=[M[p],M[c]];
+    for(let r=c+1;r<n;r++){const f=M[r][c]/M[c][c];for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k]}
+  }
+  const x=Array(n);
+  for(let r=n-1;r>=0;r--){let s=M[r][n];for(let k=r+1;k<n;k++)s-=M[r][k]*x[k];x[r]=s/M[r][r]}
+  return x.map((v,i)=>"x"+(i+1)+" = "+fmt(v)).join("\n");
+});
+
+/* Number theory tab */
+function factor(n){
+  const f=[];for(let p=2;p*p<=n;p+=p===2?1:2){let k=0;while(n%p===0){n/=p;k++}if(k)f.push([p,k])}
+  if(n>1)f.push([n,1]);return f;
+}
+$("#bn").onclick=()=>out("#o_nt",()=>{
+  const n=val("#n1"),m=val("#n2");
+  if(!Number.isInteger(n)||!Number.isInteger(m)||n<1||m<1||n>Number.MAX_SAFE_INTEGER)throw Error("enter positive integers below 2^53");
+  const fs=k=>factor(k).map(([p,e])=>e>1?p+"^"+e:p).join(" x ")||"1";
+  const prime=k=>k>1&&factor(k).length===1&&factor(k)[0][1]===1;
+  return "n = "+fs(n)+(prime(n)?" (prime)":"")+"\nm = "+fs(m)+(prime(m)?" (prime)":"")+"\ngcd(n, m) = "+gcd(n,m)+"\nlcm(n, m) = "+lcm(n,m)+"\nn mod m = "+(n%m);
+});
+
+/* Statistics tab */
+$("#bs").onclick=()=>out("#o_s",()=>{
+  const d=$("#sd").value.trim().split(/[\s,;]+/).map(Number);
+  if(!d.length||d.some(Number.isNaN))throw Error("enter numbers only");
+  const n=d.length,s=[...d].sort((a,b)=>a-b),sum=d.reduce((a,b)=>a+b,0),mu=sum/n;
+  const ss=d.reduce((a,b)=>a+(b-mu)**2,0);
+  const med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+  const cnt={};d.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const mx=Math.max(...Object.values(cnt));
+  const mo=mx===1?"none":Object.keys(cnt).filter(k=>cnt[k]===mx).join(", ");
+  let o="n = "+n+"\nsum = "+fmt(sum)+"\nmean = "+fmt(mu)+"\nmedian = "+fmt(med)+"\nmode = "+mo+"\nmin = "+fmt(s[0])+"\nmax = "+fmt(s[n-1])+"\nrange = "+fmt(s[n-1]-s[0])+"\npopulation variance = "+fmt(ss/n)+"\npopulation std dev = "+fmt(Math.sqrt(ss/n));
+  if(n>1)o+="\nsample variance = "+fmt(ss/(n-1))+"\nsample std dev = "+fmt(Math.sqrt(ss/(n-1)));
+  return o;
+});
+
+/* Bases tab */
+$("#bb").onclick=()=>out("#o_b",()=>{
+  const base=parseInt($("#bf").value,10);
+  if(!(base>=2&&base<=36))throw Error("base must be between 2 and 36");
+  let s=$("#bv").value.trim().toLowerCase(),neg=false;
+  if(s[0]==="-"){neg=true;s=s.slice(1)}
+  if(!s)throw Error("enter a value");
+  let v=0n;
+  for(const ch of s){const d=parseInt(ch,36);if(Number.isNaN(d)||d>=base)throw Error('digit "'+ch+'" is invalid in base '+base);v=v*BigInt(base)+BigInt(d)}
+  if(neg)v=-v;
+  return "binary  = "+v.toString(2)+"\noctal   = "+v.toString(8)+"\ndecimal = "+v.toString(10)+"\nhex     = "+v.toString(16);
+});
+
+/* Tabs */
+$("#tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  document.querySelectorAll(".panel").forEach(p=>p.hidden=p.id!==b.dataset.t);
+});
+</script>
+</body>
+</html>
