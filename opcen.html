@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://api.rss2json.com https://earthquake.usgs.gov https://api.rainviewer.com;">
+<title>OPCEN | Operations Center</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#fff;--panel:#fff;--head:#f5f5f7;--fg:#1d1d1f;--mut:#6e6e73;--line:#d2d2d7;--acc:#0071e3;--bad:#c4281c;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#0a0e13;--panel:#10161e;--head:#141c26;--fg:#dbe4ea;--mut:#8a9bab;--line:#1e2a37;--acc:#4fc3d9;--bad:#ff6961}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 "SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+code,.m,#clock{font-family:Hack,"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+a{color:inherit}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--head)}
+.top h1{margin:0;font-size:17px;font-weight:600}.top h1 span{color:var(--mut);font-weight:400;font-size:13px;margin-left:8px}
+#clock{font-size:15px}#date{color:var(--mut);font-size:12px}
+.strip{display:flex;gap:28px;overflow-x:auto;white-space:nowrap;padding:8px 20px;border-bottom:1px solid var(--line);font-size:13px;color:var(--mut)}
+.strip b{color:var(--fg);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1px;background:var(--line)}
+.panel{background:var(--panel);display:flex;flex-direction:column;min-height:320px;max-height:520px}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px;background:var(--head);border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:14px;font-weight:600}
+.st{font-size:12px;color:var(--mut)}.panel[data-s="live"] .st{color:var(--acc)}.panel[data-s="offline"] .st{color:var(--bad)}
+.pb{padding:12px 16px;overflow-y:auto;flex:1}
+.row{padding:7px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
+.row a{font-weight:500;display:block}.meta{font-size:12px;color:var(--mut);margin-top:2px}
+.tag{border:1px solid var(--line);border-radius:4px;padding:0 6px;margin-right:6px;font-size:11px}
+.err{color:var(--bad);font-size:13px}.load{color:var(--mut)}
+.hero{display:flex;align-items:baseline;gap:10px}.hero b{font-size:32px;font-weight:600}
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin:8px 0 12px;font-size:13px}.wg span{color:var(--mut)}
+#map{height:220px;border-radius:6px;border:1px solid var(--line)}
+button{font:inherit;font-size:12px;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 10px;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 20px;color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>OPCEN<span>Operations Center</span></h1>
+  <div><div id="clock">--:--:--</div><div id="date"></div></div>
+</div>
+<div class="strip" id="ticker"><span>Waiting for feed data</span></div>
+<div class="grid">
+  <section class="panel" id="p-weather" data-s="loading"><div class="ph"><h2>Weather</h2><span><button id="geo">Use my location</button> <span class="st">loading</span></span></div><div class="pb" id="b-weather"><div class="load">Loading</div></div></section>
+  <section class="panel" id="p-crisis" data-s="loading"><div class="ph"><h2>Disaster and crisis</h2><span class="st">loading</span></div><div class="pb" id="b-crisis"><div class="load">Loading</div></div></section>
+  <section class="panel" id="p-news" data-s="loading"><div class="ph"><h2>World news</h2><span class="st">loading</span></div><div class="pb" id="b-news"><div class="load">Loading</div></div></section>
+  <section class="panel" id="p-security" data-s="loading"><div class="ph"><h2>Security</h2><span class="st">loading</span></div><div class="pb" id="b-security"><div class="load">Loading</div></div></section>
+  <section class="panel" id="p-cyber" data-s="loading"><div class="ph"><h2>Cybersecurity</h2><span class="st">loading</span></div><div class="pb" id="b-cyber"><div class="load">Loading</div></div></section>
+</div>
+<footer><span>Client-side only. No backend, no login, no analytics.</span><span id="refreshed">last full refresh: none yet</span></footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const RSS="https://api.rss2json.com/v1/api.json?rss_url=";
+const DEFAULT_LOC={lat:14.5995,lon:120.9842,name:"Manila, Philippines (default)"};
+const TIMEOUT=10000;
+const FEEDS={
+  news:[{n:"BBC World",u:"https://feeds.bbci.co.uk/news/world/rss.xml"},{n:"UN News (United Nations)",u:"https://news.un.org/feed/subscribe/en/news/all/rss.xml"},{n:"PBS NewsHour",u:"https://www.pbs.org/newshour/feeds/rss/headlines"}],
+  crisis:[{n:"ReliefWeb",u:"https://reliefweb.int/updates/rss.xml"},{n:"GDACS (Global Disaster Alert and Coordination System)",u:"https://www.gdacs.org/xml/rss.xml"}],
+  security:[{n:"Krebs on Security",u:"https://krebsonsecurity.com/feed/"}],
+  cyber:[{n:"The Hacker News",u:"https://feeds.feedburner.com/TheHackersNews"},{n:"The DFIR Report (Digital Forensics and Incident Response)",u:"https://thedfirreport.com/feed/"}]
+};
+const WMO={0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Rime fog",51:"Light drizzle",53:"Moderate drizzle",55:"Dense drizzle",56:"Light freezing drizzle",57:"Dense freezing drizzle",61:"Slight rain",63:"Moderate rain",65:"Heavy rain",66:"Light freezing rain",67:"Heavy freezing rain",71:"Slight snow",73:"Moderate snow",75:"Heavy snow",77:"Snow grains",80:"Slight rain showers",81:"Moderate rain showers",82:"Violent rain showers",85:"Slight snow showers",86:"Heavy snow showers",95:"Thunderstorm",96:"Thunderstorm with hail",99:"Thunderstorm with heavy hail"};
+let loc=DEFAULT_LOC,map=null,strip=[],seen=new Set();
+
+/* clock */
+function tick(){const n=new Date();$("clock").textContent=n.toLocaleTimeString("en-GB");$("date").textContent=n.toLocaleDateString("en-US",{weekday:"short",year:"numeric",month:"short",day:"numeric"})}
+tick();setInterval(tick,1000);
+
+/* helpers */
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(u||"")?u:"#";
+const parseDate=s=>{if(!s)return null;const d=new Date(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(s)?s.replace(" ","T")+"Z":s);return isNaN(d)?null:d}; /* rss2json dates are UTC without a zone marker */
+const ago=d=>{if(!d)return"";const m=Math.floor((Date.now()-d)/60000);return m<1?"just now":m<60?m+"m ago":m<1440?Math.floor(m/60)+"h ago":Math.floor(m/1440)+"d ago"};
+const state=(id,s)=>{const p=$("p-"+id);p.dataset.s=s;p.querySelector(".st").textContent=s};
+async function fetchT(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),TIMEOUT);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
+async function feed(url,retries=1){
+  for(let i=0;i<=retries;i++){
+    try{
+      const r=await fetchT(RSS+encodeURIComponent(url));
+      if(!r.ok)throw Error("HTTP "+r.status);
+      const j=await r.json();
+      if(j.status!=="ok")throw Error("rss2json status "+j.status);
+      return j.items||[];
+    }catch(e){if(i===retries){console.error("Feed failed",url,e.message);return null}await new Promise(r=>setTimeout(r,800))}
+  }
+}
+async function collect(list,limit){
+  const res=await Promise.all(list.map(f=>feed(f.u)));
+  const items=[],failed=[];
+  res.forEach((r,i)=>{if(r===null){failed.push(list[i].n);return}r.slice(0,limit).forEach(x=>items.push({t:x.title||"Untitled",l:x.link,d:parseDate(x.pubDate),s:list[i].n}))});
+  return{items,failed};
+}
+function show(id,items,failed){
+  const b=$("b-"+id);
+  items.sort((a,b)=>(b.d||0)-(a.d||0));
+  const note=failed.length?`<div class="meta">Unreachable: ${esc(failed.join(", "))}</div>`:"";
+  if(!items.length){b.innerHTML='<div class="err">No items. Feeds unreachable.</div>'+note;state(id,"offline");return}
+  b.innerHTML=items.slice(0,10).map(x=>`<div class="row"><a href="${esc(safeUrl(x.l))}" target="_blank" rel="noopener noreferrer">${esc(x.t)}</a><div class="meta"><span class="tag">${esc(x.s)}</span>${ago(x.d)}</div></div>`).join("")+note;
+  state(id,"live");
+  items.slice(0,3).forEach(x=>{if(x.l&&!seen.has(x.l)){seen.add(x.l);strip.push(`<span><b>[${esc(x.s)}]</b> ${esc(x.t)}</span>`)}});
+}
+
+/* USGS (United States Geological Survey) significant earthquakes, past week */
+async function quakes(){
+  try{
+    const r=await fetchT("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson");
+    if(!r.ok)throw Error("HTTP "+r.status);
+    const j=await r.json();
+    return j.features.slice(0,5).map(f=>({t:"M"+(f.properties.mag!=null?f.properties.mag.toFixed(1):"?")+" | "+f.properties.place,l:f.properties.url,d:new Date(f.properties.time),s:"USGS"}));
+  }catch(e){console.error("Earthquake fetch failed",e.message);return null}
+}
+async function crisis(){
+  const [q,c]=await Promise.all([quakes(),collect(FEEDS.crisis,6)]);
+  const failed=c.failed.slice();if(q===null)failed.push("USGS");
+  show("crisis",[...(q||[]),...c.items],failed);
+}
+
+/* Open-Meteo, Leaflet and RainViewer */
+async function meteo(lat,lon){
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto`;
+  try{const r=await fetchT(u);if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}
+  catch(e){console.error("Open-Meteo failed",e.message);return null}
+}
+const hm=s=>s?new Date(s).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"n/a";
+async function weather(){
+  const {lat,lon,name}=loc,b=$("b-weather"),m=await meteo(lat,lon),c=m&&m.current,d=m&&m.daily;
+  const v=x=>x==null?"n/a":x;
+  b.innerHTML=(c?`<div class="meta">${esc(name)}</div><div class="hero"><b>${v(c.temperature_2m)}°C</b><span class="meta">${esc(WMO[c.weather_code]||"Unknown conditions")}</span></div>
+  <div class="wg"><div><span>High / low:</span> ${v(d&&d.temperature_2m_max[0])}° / ${v(d&&d.temperature_2m_min[0])}°</div><div><span>Rain chance:</span> ${v(d&&d.precipitation_probability_max[0])}%</div>
+  <div><span>Wind:</span> ${v(c.wind_speed_10m)} km/h</div><div><span>Gusts:</span> ${v(c.wind_gusts_10m)} km/h</div>
+  <div><span>Humidity:</span> ${v(c.relative_humidity_2m)}%</div><div><span>Rain now:</span> ${v(c.precipitation)} mm</div>
+  <div><span>Sunrise:</span> ${hm(d&&d.sunrise[0])}</div><div><span>Sunset:</span> ${hm(d&&d.sunset[0])}</div></div>`:'<div class="err">Weather metrics unavailable.</div>')+'<div id="map"></div>';
+  state("weather",c?"live":"offline");
+  if(map){map.remove();map=null}
+  if(typeof L==="undefined"){$("map").outerHTML='<div class="err">Map library did not load.</div>';return}
+  map=L.map("map").setView([lat,lon],7);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"&copy; OpenStreetMap contributors &copy; CARTO"}).addTo(map);
+  try{ /* rain radar overlay is best-effort */
+    const r=await fetchT("https://api.rainviewer.com/public/weather-maps.json"),j=await r.json(),past=j.radar&&j.radar.past;
+    if(past&&past.length)L.tileLayer((j.host||"https://tilecache.rainviewer.com")+past[past.length-1].path+"/256/{z}/{x}/{y}/2/1_1.png",{opacity:.6,maxZoom:18,attribution:"RainViewer"}).addTo(map);
+  }catch(e){console.warn("Radar overlay unavailable:",e.message)}
+  L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:2,fillColor:"#0071e3",fillOpacity:.9}).addTo(map).bindPopup(`<b>${esc(name)}</b><br>${c?v(c.temperature_2m)+"°C, "+v(c.wind_speed_10m)+" km/h wind":"No metrics"}`);
+  setTimeout(()=>map&&map.invalidateSize(),200);
+}
+$("geo").onclick=()=>{
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(p=>{loc={lat:p.coords.latitude,lon:p.coords.longitude,name:"Current location"};weather()},()=>{},{timeout:8000});
+};
+
+/* refresh cycle */
+async function refresh(){
+  strip=[];seen.clear();
+  await Promise.all([
+    crisis(),
+    collect(FEEDS.news,8).then(r=>show("news",r.items,r.failed)),
+    collect(FEEDS.security,10).then(r=>show("security",r.items,r.failed)),
+    collect(FEEDS.cyber,8).then(r=>show("cyber",r.items,r.failed))
+  ]);
+  $("ticker").innerHTML=strip.length?strip.join(""):"<span>No live items.</span>";
+  $("refreshed").textContent="last full refresh: "+new Date().toLocaleTimeString("en-GB");
+}
+weather();refresh();
+setInterval(refresh,10*60*1000);
+setInterval(weather,15*60*1000);
+</script>
+</body>
+</html>
