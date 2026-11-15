@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,9 +43,9 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
   <h1>Local Vault</h1>
   <p class="mut">Encrypted password vault. Runs inside this one file, with no network access.</p>
 </header>
- 
+
 <p id="status" role="status" class="mut"></p>
- 
+
 <section id="lock">
   <h2 id="lock-title"></h2>
   <form id="lock-form">
@@ -66,7 +65,7 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
     <input id="file" type="file" accept="application/json,.json" hidden>
   </p>
 </section>
- 
+
 <section id="app" hidden>
   <input id="q" type="search" placeholder="Search name, URL, username, notes" aria-label="Search entries" autocomplete="off">
   <div class="bar">
@@ -81,21 +80,21 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
   <p id="count" class="mut"></p>
   <div id="list"></div>
 </section>
- 
+
 <details>
   <summary>How it works and its limits</summary>
   <ul>
     <li>Key derivation: PBKDF2-SHA-256 (Password-Based Key Derivation Function 2 using the Secure Hash Algorithm, 256-bit) with 600,000 iterations and a random 16-byte salt. The count follows OWASP (Open Worldwide Application Security Project) guidance.</li>
     <li>Encryption: AES-256-GCM (Advanced Encryption Standard, 256-bit key, Galois/Counter Mode). A fresh random 12-byte initialization vector is generated on every save, and the settings are bound to the ciphertext as authenticated data.</li>
     <li>Storage: only ciphertext is written to this browser’s localStorage. Clearing site data deletes the vault, so use Export backup regularly and keep the backup file somewhere safe.</li>
-    <li>Import: reads CSV (Comma-Separated Values) files and ZIP archives that contain CSV files, entirely inside this page. Columns are matched by header name (Chrome, Firefox, Safari, Bitwarden, 1Password, LastPass, KeePass, Dashlane layouts). Password-protected ZIP archives and ZIP64 archives (the extension for very large archives) are not supported. The source file holds passwords in plain text, so delete it after importing.</li>
+    <li>Import: reads CSV (Comma-Separated Values) files and ZIP archives that contain CSV files, entirely inside this page. Columns are matched by header name (Chrome, Firefox, Safari, Bitwarden, 1Password, LastPass, KeePass, Dashlane, Proton Pass layouts). If a username column is empty, the email column is used instead. The import report lists how many entries received a username and which column supplied it. Password-protected ZIP archives and ZIP64 archives (the extension for very large archives) are not supported. The source file holds passwords in plain text, so delete it after importing.</li>
     <li>Network: a Content Security Policy (CSP) in this file blocks all outbound requests, so the page cannot send data anywhere.</li>
     <li>Auto-lock: after 5 minutes without input, or 60 seconds after the tab is hidden. Copied secrets are cleared from the clipboard after 20 seconds.</li>
     <li>Limits: no sync, no browser autofill, and no independent security audit. Malware, a keylogger, or a malicious browser extension on this device can defeat any browser-based vault. Strength readouts are upper-bound estimates and do not detect dictionary words or patterns.</li>
   </ul>
 </details>
 </main>
- 
+
 <dialog id="ed">
   <form id="ed-form">
     <h2 id="ed-title"></h2>
@@ -115,7 +114,7 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
     </div>
   </form>
 </dialog>
- 
+
 <dialog id="gd">
   <h2>Password generator</h2>
   <label>Length: <span id="g-lenv">24</span>
@@ -135,7 +134,7 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
     <button id="g-close" type="button">Close</button>
   </div>
 </dialog>
- 
+
 <dialog id="cm">
   <form id="cm-form">
     <h2>Change master password</h2>
@@ -149,24 +148,24 @@ ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:
     </div>
   </form>
 </dialog>
- 
+
 <dialog id="im">
   <h2>Import entries</h2>
   <p class="mut">Choose one or more CSV (Comma-Separated Values) files or ZIP archives containing CSV files. Files are read inside this page and never uploaded. They contain passwords in plain text, so delete them after importing.</p>
   <input id="im-file" type="file" accept=".csv,.txt,.zip,text/csv,application/zip" multiple aria-label="Files to import">
   <ul id="im-rep" class="rep"></ul>
   <p id="im-sum" class="mut"></p>
-  <label class="inline"><input id="im-skip" type="checkbox" checked> Skip entries that already exist in the vault</label>
+  <label class="inline"><input id="im-skip" type="checkbox" checked> Skip entries that already exist, and fill in missing usernames on matching entries</label>
   <p id="im-msg" role="alert" class="bad"></p>
   <div class="acts">
     <button id="im-go" type="button" disabled>Import</button>
     <button id="im-cancel" type="button">Close</button>
   </div>
 </dialog>
- 
+
 <script>
 "use strict";
- 
+
 /* ================= constants and state ================= */
 const STORE = "localvault.v1";
 const ITER = 600000;
@@ -179,18 +178,19 @@ const LIM = {
   inflated: 25 * 1024 * 1024,  /* bytes per file inside a ZIP, after decompression */
   zipEntries: 5000,
   csvRows: 50000,
+  headerScan: 10,              /* rows searched for the header line */
   name: 200, url: 2000, user: 500, pass: 5000, notes: 20000
 };
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const $ = (s) => document.querySelector(s);
- 
+
 const st = {
   key: null, salt: null, iter: ITER, entries: [], blob: null,
   pending: null, imp: [], shown: new Set(),
   idle: null, hid: null, clip: null, genTarget: null
 };
- 
+
 /* ================= helpers ================= */
 function h(tag, attrs, ...kids) {
   const n = document.createElement(tag);
@@ -239,7 +239,8 @@ function estBits(pw) {
 }
 function rating(b) { return b < 40 ? "weak" : b < 60 ? "fair" : b < 80 ? "strong" : "very strong"; }
 function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
- 
+function entCount(n) { return n + (n === 1 ? " entry" : " entries"); }
+
 /* ================= storage ================= */
 function readStore() {
   try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; }
@@ -253,7 +254,7 @@ function validBlob(b) {
   return !!b && b.v === 1 && Number.isInteger(b.iter) && b.iter >= 100000 && b.iter <= 5000000 &&
     ["salt", "iv", "ct"].every((k) => typeof b[k] === "string");
 }
- 
+
 /* ================= crypto (format unchanged, so existing vaults and backups still open) ================= */
 async function deriveKey(pw, salt, iter) {
   const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
@@ -263,7 +264,7 @@ async function deriveKey(pw, salt, iter) {
   );
 }
 const aad = (iter) => enc.encode("localvault|v1|" + iter);
- 
+
 async function seal() {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const pt = enc.encode(JSON.stringify({ entries: st.entries }));
@@ -281,7 +282,7 @@ async function openBlob(blob, pw) {
   const data = JSON.parse(dec.decode(pt));
   return { key, salt, iter: blob.iter, entries: Array.isArray(data.entries) ? data.entries : [] };
 }
- 
+
 /* ================= lock and unlock ================= */
 function showLock() {
   $("#app").hidden = true;
@@ -325,7 +326,7 @@ document.addEventListener("visibilitychange", () => {
   clearTimeout(st.hid);
   if (document.hidden && st.key) st.hid = setTimeout(() => lock("Locked while the tab was hidden."), HIDDEN_MS);
 });
- 
+
 $("#lock-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const pw = $("#mp").value;
@@ -366,7 +367,7 @@ $("#lock-form").addEventListener("submit", async (ev) => {
     $("#mp2").value = "";
   }
 });
- 
+
 /* ================= restore from backup ================= */
 $("#restore").addEventListener("click", () => $("#file").click());
 $("#file").addEventListener("change", async () => {
@@ -385,7 +386,7 @@ $("#file").addEventListener("change", async () => {
   }
 });
 $("#cancel-restore").addEventListener("click", () => { st.pending = null; showLock(); say(""); });
- 
+
 /* ================= list rendering ================= */
 function render() {
   const q = $("#q").value.trim().toLowerCase();
@@ -422,7 +423,7 @@ function render() {
   }
 }
 $("#q").addEventListener("input", render);
- 
+
 async function copy(text, what) {
   if (!text) { say("Nothing to copy.", true); return; }
   try { await navigator.clipboard.writeText(text); }
@@ -438,7 +439,7 @@ async function copy(text, what) {
     say("Clipboard cleared.");
   }, CLIP_MS);
 }
- 
+
 async function removeEntry(e) {
   if (!confirm("Delete the entry “" + e.name + "”? This cannot be undone.")) return;
   st.entries = st.entries.filter((x) => x.id !== e.id);
@@ -447,7 +448,7 @@ async function removeEntry(e) {
   render();
   say(ok ? "Entry deleted." : "Deleted in memory only. Browser storage failed; export a backup now.", !ok);
 }
- 
+
 /* ================= entry editor ================= */
 function strength() {
   const pw = $("#f-pass").value;
@@ -492,7 +493,7 @@ $("#ed-form").addEventListener("submit", async (ev) => {
   render();
   say(ok ? "Entry saved." : "Saved in memory only. Browser storage failed; export a backup now.", !ok);
 });
- 
+
 /* ================= password generator ================= */
 const SETS = {
   lower: "abcdefghijklmnopqrstuvwxyz",
@@ -546,13 +547,17 @@ $("#g-use").addEventListener("click", () => {
 });
 $("#g-close").addEventListener("click", () => $("#gd").close());
 $("#gd").addEventListener("close", () => { $("#g-out").textContent = ""; st.genTarget = null; });
- 
+
 /* ================= CSV (Comma-Separated Values) parsing ================= */
 function decodeText(u8) {
-  try { return new TextDecoder("utf-8", { fatal: true }).decode(u8); }
-  catch (e) { return new TextDecoder("windows-1252").decode(u8); }
+  /* Remove a UTF-8 byte order mark (EF BB BF) before decoding. */
+  if (u8.length >= 3 && u8[0] === 0xef && u8[1] === 0xbb && u8[2] === 0xbf) u8 = u8.subarray(3);
+  let s;
+  try { s = new TextDecoder("utf-8", { fatal: true }).decode(u8); }
+  catch (e) { s = new TextDecoder("windows-1252").decode(u8); }
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
 }
- 
+
 /* RFC 4180 style: quoted fields, doubled quotes, embedded newlines, CRLF or LF. Delimiter is
    chosen from the header line among comma, semicolon and tab. */
 function parseCsv(text) {
@@ -583,25 +588,40 @@ function parseCsv(text) {
   if (f !== "" || row.length) endRow();
   return rows;
 }
- 
+
 /* Header names from common exporters, matched after lowercasing and stripping punctuation.
-   Earlier aliases win, and a column is used for one field only. */
+   Every column that matches a field is kept, in alias order. When several columns match
+   (for example "username" and "email"), the first one that is not empty in a given row
+   supplies the value. A column is used for one field only. */
 const ALIASES = {
-  name: ["name", "title", "accountname", "account", "label", "entry", "sitename"],
-  url: ["url", "website", "weburl", "loginuri", "uri", "address", "hostname", "web"],
-  user: ["username", "loginusername", "loginname", "login", "user", "userid", "email"],
-  pass: ["password", "loginpassword", "pass", "pwd"],
-  notes: ["notes", "note", "extra", "comments", "comment", "description"]
+  name: ["name", "title", "accountname", "account", "label", "entry", "sitename", "service"],
+  url: ["url", "website", "weburl", "websiteurl", "loginuri", "loginurl", "uri", "address", "hostname", "web", "siteurl", "link"],
+  user: ["username", "loginusername", "loginname", "login", "user", "userid", "usernameoremail", "usernameemail", "useremail", "loginemail", "email", "emailaddress", "username1", "username2", "username3", "identifier"],
+  pass: ["password", "loginpassword", "pass", "pwd", "password1"],
+  notes: ["notes", "note", "extra", "comments", "comment", "description", "memo"]
+};
+/* Fallback when no exact header matched. Tested on the normalized header. */
+const FUZZY = {
+  pass: (x) => /pass|pwd/.test(x) && !/user|url|uri|date|time|modif|creat|hint|question|policy|strength|length/.test(x),
+  url: (x) => /url|uri|link|website|domain/.test(x),
+  name: (x) => /name|title|service|label/.test(x) && !/user|login|file/.test(x),
+  notes: (x) => /note|comment|memo/.test(x),
+  user: (x) => /user|login|mail/.test(x) && !/pass|pwd|url|uri|site|web|otp|totp|date|time|modif|creat|count|type|folder|group|fav/.test(x)
 };
 const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
- 
+
 function mapColumns(header) {
   const hs = header.map(norm), used = new Set(), map = {};
+  const take = (field, i) => { (map[field] = map[field] || []).push(i); used.add(i); };
   for (const [field, list] of Object.entries(ALIASES)) {
     for (const alias of list) {
-      const i = hs.findIndex((x, idx) => x === alias && !used.has(idx));
-      if (i >= 0) { map[field] = i; used.add(i); break; }
+      hs.forEach((x, i) => { if (x === alias && !used.has(i)) take(field, i); });
     }
+  }
+  for (const field of ["pass", "url", "name", "notes", "user"]) {
+    /* username fallback columns are always appended; other fields only when nothing matched */
+    if (field !== "user" && map[field]) continue;
+    hs.forEach((x, i) => { if (x && !used.has(i) && FUZZY[field](x)) take(field, i); });
   }
   return map;
 }
@@ -609,25 +629,38 @@ function hostOf(u) {
   try { return new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : "https://" + u).hostname; }
   catch (e) { return ""; }
 }
+/* Returns { list, withUser, userCols }. The header line is searched in the first few rows. */
 function entriesFromRows(rows) {
   if (rows.length < 2) throw new Error("No data rows found.");
-  const m = mapColumns(rows[0]);
-  if (m.pass === undefined) throw new Error("No password column recognized. Columns found: " + rows[0].slice(0, 12).join(", "));
-  const get = (r, k, max, trim) => {
-    const v = m[k] === undefined ? "" : String(r[m[k]] == null ? "" : r[m[k]]);
-    return (trim === false ? v : v.trim()).slice(0, max);
-  };
-  const out = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const url = get(r, "url", LIM.url), user = get(r, "user", LIM.user), pass = get(r, "pass", LIM.pass, false);
-    if (!pass && !user && !url) continue;
-    const name = get(r, "name", LIM.name) || hostOf(url) || user || "Untitled";
-    out.push({ id: rid(), name, url, user, pass, notes: get(r, "notes", LIM.notes), updated: new Date().toISOString() });
+  let hi = -1, m = null;
+  for (let i = 0; i < Math.min(LIM.headerScan, rows.length - 1); i++) {
+    const t = mapColumns(rows[i]);
+    if (t.pass) { hi = i; m = t; break; }
   }
-  return out;
+  if (!m) throw new Error("No password column recognized. Columns found: " + rows[0].slice(0, 12).join(", "));
+  const header = rows[hi];
+  const cell = (r, i) => String(r[i] == null ? "" : r[i]);
+  const pick = (r, k, max, trim) => {
+    for (const i of m[k] || []) {
+      const raw = cell(r, i);
+      const v = trim === false ? raw : raw.trim();
+      if (v !== "") return v.slice(0, max);
+    }
+    return "";
+  };
+  const list = [];
+  let withUser = 0;
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const url = pick(r, "url", LIM.url), user = pick(r, "user", LIM.user), pass = pick(r, "pass", LIM.pass, false);
+    if (!pass && !user && !url) continue;
+    const name = pick(r, "name", LIM.name) || hostOf(url) || user || "Untitled";
+    if (user) withUser++;
+    list.push({ id: rid(), name, url, user, pass, notes: pick(r, "notes", LIM.notes), updated: new Date().toISOString() });
+  }
+  return { list, withUser, userCols: (m.user || []).map((i) => cell(header, i)), headers: header };
 }
- 
+
 /* ================= ZIP reading (stored and deflate entries, no encryption, no ZIP64) ================= */
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
@@ -643,7 +676,7 @@ function crc32(u8) {
   for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
- 
+
 function zipDirectory(u8) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
   const len = u8.length;
@@ -672,7 +705,7 @@ function zipDirectory(u8) {
   }
   return out;
 }
- 
+
 async function inflateRaw(data, limit) {
   if (typeof DecompressionStream === "undefined") throw new Error("This browser cannot decompress ZIP files.");
   const reader = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
@@ -690,7 +723,7 @@ async function inflateRaw(data, limit) {
   for (const c of parts) { out.set(c, o); o += c.length; }
   return out;
 }
- 
+
 async function zipExtract(u8, e) {
   if (e.flags & 1) throw new Error("password-protected, which is not supported");
   if (e.usize > LIM.inflated) throw new Error("larger than 25 MB");
@@ -707,10 +740,33 @@ async function zipExtract(u8, e) {
   if (out.length !== e.usize || crc32(out) !== e.crc) throw new Error("integrity check (CRC-32, a checksum) failed");
   return out;
 }
- 
+
 /* ================= import workflow ================= */
 const keyOf = (e) => [e.name, e.url, e.user, e.pass].join("\u0001");
- 
+const noUserKey = (e) => [e.name, e.url, e.pass].join("\u0001");
+
+/* One report line per CSV: entry count, how many got a username, and which columns supplied it. */
+function reportLine(label, r) {
+  let t = label + ": " + entCount(r.list.length) + ", " + r.withUser + " with a username";
+  if (!r.userCols.length) {
+    return [t + ". No username column recognized. Columns found: " + r.headers.slice(0, 12).join(", "), true];
+  }
+  t += " (from " + r.userCols.map((c) => "“" + c + "”").join(", ") + ")";
+  return [t, r.list.length > 0 && r.withUser === 0];
+}
+
+/* Existing entries that have no username, indexed by name, URL and password, so a re-import can fill them. */
+function blankUserIndex() {
+  const m = new Map();
+  for (const e of st.entries) {
+    if (e.user) continue;
+    const k = noUserKey(e);
+    if (!m.has(k)) m.set(k, []);
+    m.get(k).push(e);
+  }
+  return m;
+}
+
 async function loadImport(files) {
   const entries = [], report = [];
   $("#im-go").disabled = true;
@@ -728,16 +784,15 @@ async function loadImport(files) {
         for (const e of csvs) {
           const label = f.name + " > " + e.name;
           try {
-            const rows = parseCsv(decodeText(await zipExtract(u8, e)));
-            const list = entriesFromRows(rows);
-            entries.push(...list);
-            report.push([label + ": " + plural(list.length, "entry").replace("entrys", "entries"), false]);
+            const r = entriesFromRows(parseCsv(decodeText(await zipExtract(u8, e))));
+            entries.push(...r.list);
+            report.push(reportLine(label, r));
           } catch (err) { report.push([label + ": " + err.message, true]); }
         }
       } else if (/\.(csv|txt)$/i.test(f.name) || f.type === "text/csv") {
-        const list = entriesFromRows(parseCsv(decodeText(u8)));
-        entries.push(...list);
-        report.push([f.name + ": " + plural(list.length, "entry").replace("entrys", "entries"), false]);
+        const r = entriesFromRows(parseCsv(decodeText(u8)));
+        entries.push(...r.list);
+        report.push(reportLine(f.name, r));
       } else throw new Error("unsupported type; use .csv or .zip");
     } catch (err) { report.push([f.name + ": " + err.message, true]); }
   }
@@ -746,13 +801,16 @@ async function loadImport(files) {
   ul.replaceChildren();
   for (const [text, bad] of report) ul.append(h("li", { class: bad ? "bad" : "" }, text));
   const have = new Set(st.entries.map(keyOf));
+  const blanks = blankUserIndex();
   const existing = entries.filter((e) => have.has(keyOf(e))).length;
+  const fillable = entries.filter((e) => e.user && blanks.has(noUserKey(e))).length;
   $("#im-sum").textContent = entries.length
-    ? plural(entries.length, "entry").replace("entrys", "entries") + " ready to import; " + existing + " already in the vault."
+    ? entCount(entries.length) + " ready to import; " + existing + " already in the vault" +
+      (fillable ? "; " + fillable + " match existing entries that lack a username and will be filled in" : "") + "."
     : "Nothing to import.";
   $("#im-go").disabled = !entries.length || !st.key;
 }
- 
+
 $("#imp").addEventListener("click", () => {
   st.imp = [];
   $("#im-file").value = "";
@@ -770,11 +828,25 @@ $("#im-cancel").addEventListener("click", () => $("#im").close());
 $("#im").addEventListener("close", () => { st.imp = []; $("#im-file").value = ""; $("#im-rep").replaceChildren(); });
 $("#im-go").addEventListener("click", async () => {
   if (!st.key || !st.imp.length) return;
-  const seen = new Set($("#im-skip").checked ? st.entries.map(keyOf) : []);
-  let added = 0, skipped = 0;
+  const skip = $("#im-skip").checked;
+  const seen = new Set(skip ? st.entries.map(keyOf) : []);
+  const blanks = skip ? blankUserIndex() : new Map();
+  let added = 0, skipped = 0, filled = 0;
   for (const e of st.imp) {
     const k = keyOf(e);
     if (seen.has(k)) { skipped++; continue; }
+    /* Same name, URL and password as an existing entry that has no username: fill it in, do not duplicate. */
+    if (e.user) {
+      const pool = blanks.get(noUserKey(e));
+      if (pool && pool.length) {
+        const target = pool.shift();
+        target.user = e.user;
+        target.updated = new Date().toISOString();
+        seen.add(k);
+        filled++;
+        continue;
+      }
+    }
     seen.add(k);
     st.entries.push(e);
     added++;
@@ -784,10 +856,12 @@ $("#im-go").addEventListener("click", async () => {
   $("#im").close();
   render();
   say((ok ? "" : "Saved in memory only. Browser storage failed; export a backup now. ") +
-    "Imported " + added + (added === 1 ? " entry" : " entries") + (skipped ? ", skipped " + skipped + " duplicate" + (skipped === 1 ? "" : "s") : "") +
+    "Imported " + entCount(added) +
+    (filled ? ", filled in " + plural(filled, "missing username") : "") +
+    (skipped ? ", skipped " + plural(skipped, "duplicate") : "") +
     ". Delete the source file now.", !ok);
 });
- 
+
 /* ================= export, change master password, delete ================= */
 $("#export").addEventListener("click", () => {
   if (!st.blob) { say("Nothing to export yet.", true); return; }
@@ -799,7 +873,7 @@ $("#export").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   say("Encrypted backup downloaded. It is only readable with your master password.");
 });
- 
+
 $("#chmp").addEventListener("click", () => {
   ["#cm-old", "#cm-new", "#cm-new2"].forEach((s) => ($(s).value = ""));
   $("#cm-msg").textContent = "";
@@ -831,7 +905,7 @@ $("#cm-form").addEventListener("submit", async (ev) => {
     btn.disabled = false;
   }
 });
- 
+
 $("#lockbtn").addEventListener("click", () => lock());
 $("#wipe").addEventListener("click", () => {
   if (!confirm("Permanently delete the vault from this browser? Export a backup first if you may need it.")) return;
@@ -839,7 +913,7 @@ $("#wipe").addEventListener("click", () => {
   st.blob = null;
   lock("Vault deleted from this browser.");
 });
- 
+
 /* ================= start ================= */
 if (!window.crypto || !crypto.subtle) {
   $("#lock").hidden = true;
@@ -850,4 +924,3 @@ if (!window.crypto || !crypto.subtle) {
 </script>
 </body>
 </html>
- 
