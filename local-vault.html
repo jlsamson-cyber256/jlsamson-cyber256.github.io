@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,9 +20,11 @@ h2{font-size:17px;margin:20px 0 8px}
 label{display:block;margin-top:10px}
 input[type=text],input[type=password],input[type=search],input[type=number],textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);font:inherit}
 input.mono,textarea.mono{font-family:Hack,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+input[type=file]{display:block;margin-top:6px;font:inherit;color:var(--fg)}
 label.inline{display:flex;align-items:center;gap:8px;margin-top:8px}
 button{padding:6px 12px;background:transparent;color:var(--fg);border:1px solid var(--line);font:inherit;cursor:pointer}
 button:hover{border-color:var(--fg)}
+button:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:2px solid var(--acc);outline-offset:1px}
 .bar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .row{border-top:1px solid var(--line);padding:10px 0}
@@ -32,6 +35,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 output{display:block;margin-top:8px;padding:8px;border:1px solid var(--line);word-break:break-all}
 details{margin-top:28px;border-top:1px solid var(--line);padding-top:12px}
 li{margin:4px 0}
+ul.rep{padding-left:18px;margin:8px 0;max-height:200px;overflow:auto;word-break:break-word}
 </style>
 </head>
 <body>
@@ -40,9 +44,9 @@ li{margin:4px 0}
   <h1>Local Vault</h1>
   <p class="mut">Encrypted password vault. Runs inside this one file, with no network access.</p>
 </header>
-
+ 
 <p id="status" role="status" class="mut"></p>
-
+ 
 <section id="lock">
   <h2 id="lock-title"></h2>
   <form id="lock-form">
@@ -62,11 +66,12 @@ li{margin:4px 0}
     <input id="file" type="file" accept="application/json,.json" hidden>
   </p>
 </section>
-
+ 
 <section id="app" hidden>
   <input id="q" type="search" placeholder="Search name, URL, username, notes" aria-label="Search entries" autocomplete="off">
   <div class="bar">
     <button id="add" type="button">Add entry</button>
+    <button id="imp" type="button">Import</button>
     <button id="gen" type="button">Generator</button>
     <button id="export" type="button">Export backup</button>
     <button id="chmp" type="button">Change master password</button>
@@ -76,20 +81,21 @@ li{margin:4px 0}
   <p id="count" class="mut"></p>
   <div id="list"></div>
 </section>
-
+ 
 <details>
   <summary>How it works and its limits</summary>
   <ul>
     <li>Key derivation: PBKDF2-SHA-256 (Password-Based Key Derivation Function 2 using the Secure Hash Algorithm, 256-bit) with 600,000 iterations and a random 16-byte salt. The count follows OWASP (Open Worldwide Application Security Project) guidance.</li>
     <li>Encryption: AES-256-GCM (Advanced Encryption Standard, 256-bit key, Galois/Counter Mode). A fresh random 12-byte initialization vector is generated on every save, and the settings are bound to the ciphertext as authenticated data.</li>
     <li>Storage: only ciphertext is written to this browser’s localStorage. Clearing site data deletes the vault, so use Export backup regularly and keep the backup file somewhere safe.</li>
+    <li>Import: reads CSV (Comma-Separated Values) files and ZIP archives that contain CSV files, entirely inside this page. Columns are matched by header name (Chrome, Firefox, Safari, Bitwarden, 1Password, LastPass, KeePass, Dashlane layouts). Password-protected ZIP archives and ZIP64 archives (the extension for very large archives) are not supported. The source file holds passwords in plain text, so delete it after importing.</li>
     <li>Network: a Content Security Policy (CSP) in this file blocks all outbound requests, so the page cannot send data anywhere.</li>
     <li>Auto-lock: after 5 minutes without input, or 60 seconds after the tab is hidden. Copied secrets are cleared from the clipboard after 20 seconds.</li>
     <li>Limits: no sync, no browser autofill, and no independent security audit. Malware, a keylogger, or a malicious browser extension on this device can defeat any browser-based vault. Strength readouts are upper-bound estimates and do not detect dictionary words or patterns.</li>
   </ul>
 </details>
 </main>
-
+ 
 <dialog id="ed">
   <form id="ed-form">
     <h2 id="ed-title"></h2>
@@ -109,7 +115,7 @@ li{margin:4px 0}
     </div>
   </form>
 </dialog>
-
+ 
 <dialog id="gd">
   <h2>Password generator</h2>
   <label>Length: <span id="g-lenv">24</span>
@@ -129,7 +135,7 @@ li{margin:4px 0}
     <button id="g-close" type="button">Close</button>
   </div>
 </dialog>
-
+ 
 <dialog id="cm">
   <form id="cm-form">
     <h2>Change master password</h2>
@@ -143,26 +149,49 @@ li{margin:4px 0}
     </div>
   </form>
 </dialog>
-
+ 
+<dialog id="im">
+  <h2>Import entries</h2>
+  <p class="mut">Choose one or more CSV (Comma-Separated Values) files or ZIP archives containing CSV files. Files are read inside this page and never uploaded. They contain passwords in plain text, so delete them after importing.</p>
+  <input id="im-file" type="file" accept=".csv,.txt,.zip,text/csv,application/zip" multiple aria-label="Files to import">
+  <ul id="im-rep" class="rep"></ul>
+  <p id="im-sum" class="mut"></p>
+  <label class="inline"><input id="im-skip" type="checkbox" checked> Skip entries that already exist in the vault</label>
+  <p id="im-msg" role="alert" class="bad"></p>
+  <div class="acts">
+    <button id="im-go" type="button" disabled>Import</button>
+    <button id="im-cancel" type="button">Close</button>
+  </div>
+</dialog>
+ 
 <script>
 "use strict";
-
-/* ---------- constants and state ---------- */
+ 
+/* ================= constants and state ================= */
 const STORE = "localvault.v1";
 const ITER = 600000;
 const IDLE_MS = 5 * 60 * 1000;
 const HIDDEN_MS = 60 * 1000;
 const CLIP_MS = 20 * 1000;
+const MAX_SHOWN = 200;
+const LIM = {
+  file: 25 * 1024 * 1024,      /* bytes per selected file */
+  inflated: 25 * 1024 * 1024,  /* bytes per file inside a ZIP, after decompression */
+  zipEntries: 5000,
+  csvRows: 50000,
+  name: 200, url: 2000, user: 500, pass: 5000, notes: 20000
+};
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const $ = (s) => document.querySelector(s);
-
+ 
 const st = {
   key: null, salt: null, iter: ITER, entries: [], blob: null,
-  pending: null, shown: new Set(), idle: null, hid: null, clip: null, genTarget: null
+  pending: null, imp: [], shown: new Set(),
+  idle: null, hid: null, clip: null, genTarget: null
 };
-
-/* ---------- helpers ---------- */
+ 
+/* ================= helpers ================= */
 function h(tag, attrs, ...kids) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -209,8 +238,9 @@ function estBits(pw) {
   return Math.round(pw.length * Math.log2(pool || 1));
 }
 function rating(b) { return b < 40 ? "weak" : b < 60 ? "fair" : b < 80 ? "strong" : "very strong"; }
-
-/* ---------- storage ---------- */
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+ 
+/* ================= storage ================= */
 function readStore() {
   try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; }
   catch (e) { return null; }
@@ -223,8 +253,8 @@ function validBlob(b) {
   return !!b && b.v === 1 && Number.isInteger(b.iter) && b.iter >= 100000 && b.iter <= 5000000 &&
     ["salt", "iv", "ct"].every((k) => typeof b[k] === "string");
 }
-
-/* ---------- crypto ---------- */
+ 
+/* ================= crypto (format unchanged, so existing vaults and backups still open) ================= */
 async function deriveKey(pw, salt, iter) {
   const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
@@ -233,7 +263,7 @@ async function deriveKey(pw, salt, iter) {
   );
 }
 const aad = (iter) => enc.encode("localvault|v1|" + iter);
-
+ 
 async function seal() {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const pt = enc.encode(JSON.stringify({ entries: st.entries }));
@@ -251,8 +281,8 @@ async function openBlob(blob, pw) {
   const data = JSON.parse(dec.decode(pt));
   return { key, salt, iter: blob.iter, entries: Array.isArray(data.entries) ? data.entries : [] };
 }
-
-/* ---------- lock and unlock ---------- */
+ 
+/* ================= lock and unlock ================= */
 function showLock() {
   $("#app").hidden = true;
   $("#lock").hidden = false;
@@ -276,12 +306,12 @@ function enterApp() {
   bump();
 }
 function lock(msg) {
-  st.key = null; st.salt = null; st.entries = []; st.shown.clear(); st.genTarget = null;
+  st.key = null; st.salt = null; st.entries = []; st.imp = [];
+  st.shown.clear(); st.genTarget = null;
   clearTimeout(st.idle); clearTimeout(st.hid);
   document.querySelectorAll("dialog[open]").forEach((d) => d.close());
-  ["#f-pass", "#f-name", "#f-user", "#f-url", "#f-notes", "#g-out", "#cm-old", "#cm-new", "#cm-new2"].forEach((s) => {
-    const el = $(s); if ("value" in el) el.value = ""; else el.textContent = "";
-  });
+  ["#f-pass", "#f-name", "#f-user", "#f-url", "#f-notes", "#cm-old", "#cm-new", "#cm-new2"].forEach((s) => { $(s).value = ""; });
+  $("#g-out").textContent = "";
   $("#list").replaceChildren();
   showLock();
   say(msg || "Locked.");
@@ -295,7 +325,7 @@ document.addEventListener("visibilitychange", () => {
   clearTimeout(st.hid);
   if (document.hidden && st.key) st.hid = setTimeout(() => lock("Locked while the tab was hidden."), HIDDEN_MS);
 });
-
+ 
 $("#lock-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const pw = $("#mp").value;
@@ -336,8 +366,8 @@ $("#lock-form").addEventListener("submit", async (ev) => {
     $("#mp2").value = "";
   }
 });
-
-/* ---------- restore from backup ---------- */
+ 
+/* ================= restore from backup ================= */
 $("#restore").addEventListener("click", () => $("#file").click());
 $("#file").addEventListener("change", async () => {
   const f = $("#file").files[0];
@@ -355,28 +385,30 @@ $("#file").addEventListener("change", async () => {
   }
 });
 $("#cancel-restore").addEventListener("click", () => { st.pending = null; showLock(); say(""); });
-
-/* ---------- list rendering ---------- */
+ 
+/* ================= list rendering ================= */
 function render() {
   const q = $("#q").value.trim().toLowerCase();
   const list = $("#list");
   list.replaceChildren();
   const items = st.entries
     .filter((e) => !q || [e.name, e.url, e.user, e.notes].join("\n").toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  $("#count").textContent = items.length + " of " + st.entries.length + " entries";
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const shownItems = items.slice(0, MAX_SHOWN);
+  $("#count").textContent = items.length + " of " + st.entries.length + " entries" +
+    (items.length > MAX_SHOWN ? " (showing the first " + MAX_SHOWN + "; search to narrow)" : "");
   if (!st.entries.length) {
-    list.append(h("p", { class: "mut" }, "The vault is empty. Select Add entry to store your first login."));
+    list.append(h("p", { class: "mut" }, "The vault is empty. Select Add entry or Import to store your first login."));
     return;
   }
-  for (const e of items) {
+  for (const e of shownItems) {
     const shown = st.shown.has(e.id);
     const meta = h("div", {}, h("strong", {}, e.name));
     if (e.user) meta.append(h("div", { class: "mut" }, e.user));
     if (e.url) meta.append(h("div", { class: "mut mono" }, e.url));
     const row = h("div", { class: "row" }, meta);
     if (shown) {
-      row.append(h("div", { class: "secret mono" }, e.pass));
+      row.append(h("div", { class: "secret mono" }, e.pass || ""));
       if (e.notes) row.append(h("div", { class: "secret" }, e.notes));
     }
     row.append(h("div", { class: "acts" },
@@ -390,7 +422,7 @@ function render() {
   }
 }
 $("#q").addEventListener("input", render);
-
+ 
 async function copy(text, what) {
   if (!text) { say("Nothing to copy.", true); return; }
   try { await navigator.clipboard.writeText(text); }
@@ -406,7 +438,7 @@ async function copy(text, what) {
     say("Clipboard cleared.");
   }, CLIP_MS);
 }
-
+ 
 async function removeEntry(e) {
   if (!confirm("Delete the entry “" + e.name + "”? This cannot be undone.")) return;
   st.entries = st.entries.filter((x) => x.id !== e.id);
@@ -415,8 +447,8 @@ async function removeEntry(e) {
   render();
   say(ok ? "Entry deleted." : "Deleted in memory only. Browser storage failed; export a backup now.", !ok);
 }
-
-/* ---------- entry editor ---------- */
+ 
+/* ================= entry editor ================= */
 function strength() {
   const pw = $("#f-pass").value;
   const b = estBits(pw);
@@ -460,8 +492,8 @@ $("#ed-form").addEventListener("submit", async (ev) => {
   render();
   say(ok ? "Entry saved." : "Saved in memory only. Browser storage failed; export a backup now.", !ok);
 });
-
-/* ---------- generator ---------- */
+ 
+/* ================= password generator ================= */
 const SETS = {
   lower: "abcdefghijklmnopqrstuvwxyz",
   upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -514,8 +546,249 @@ $("#g-use").addEventListener("click", () => {
 });
 $("#g-close").addEventListener("click", () => $("#gd").close());
 $("#gd").addEventListener("close", () => { $("#g-out").textContent = ""; st.genTarget = null; });
-
-/* ---------- export, change master password, delete ---------- */
+ 
+/* ================= CSV (Comma-Separated Values) parsing ================= */
+function decodeText(u8) {
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(u8); }
+  catch (e) { return new TextDecoder("windows-1252").decode(u8); }
+}
+ 
+/* RFC 4180 style: quoted fields, doubled quotes, embedded newlines, CRLF or LF. Delimiter is
+   chosen from the header line among comma, semicolon and tab. */
+function parseCsv(text) {
+  const nl = text.indexOf("\n");
+  const first = text.slice(0, nl < 0 ? text.length : nl);
+  const delim = [",", ";", "\t"]
+    .map((d) => [d, first.split(d).length])
+    .sort((a, b) => b[1] - a[1])[0][0];
+  const rows = [];
+  let row = [], f = "", q = false;
+  const endRow = () => {
+    row.push(f); f = "";
+    if (row.some((c) => c !== "")) rows.push(row);
+    row = [];
+    if (rows.length > LIM.csvRows) throw new Error("More than " + LIM.csvRows + " rows.");
+  };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"' && f === "") q = true;
+    else if (c === delim) { row.push(f); f = ""; }
+    else if (c === "\n") endRow();
+    else if (c === "\r") { if (text[i + 1] === "\n") i++; endRow(); }
+    else f += c;
+  }
+  if (f !== "" || row.length) endRow();
+  return rows;
+}
+ 
+/* Header names from common exporters, matched after lowercasing and stripping punctuation.
+   Earlier aliases win, and a column is used for one field only. */
+const ALIASES = {
+  name: ["name", "title", "accountname", "account", "label", "entry", "sitename"],
+  url: ["url", "website", "weburl", "loginuri", "uri", "address", "hostname", "web"],
+  user: ["username", "loginusername", "loginname", "login", "user", "userid", "email"],
+  pass: ["password", "loginpassword", "pass", "pwd"],
+  notes: ["notes", "note", "extra", "comments", "comment", "description"]
+};
+const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+ 
+function mapColumns(header) {
+  const hs = header.map(norm), used = new Set(), map = {};
+  for (const [field, list] of Object.entries(ALIASES)) {
+    for (const alias of list) {
+      const i = hs.findIndex((x, idx) => x === alias && !used.has(idx));
+      if (i >= 0) { map[field] = i; used.add(i); break; }
+    }
+  }
+  return map;
+}
+function hostOf(u) {
+  try { return new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : "https://" + u).hostname; }
+  catch (e) { return ""; }
+}
+function entriesFromRows(rows) {
+  if (rows.length < 2) throw new Error("No data rows found.");
+  const m = mapColumns(rows[0]);
+  if (m.pass === undefined) throw new Error("No password column recognized. Columns found: " + rows[0].slice(0, 12).join(", "));
+  const get = (r, k, max, trim) => {
+    const v = m[k] === undefined ? "" : String(r[m[k]] == null ? "" : r[m[k]]);
+    return (trim === false ? v : v.trim()).slice(0, max);
+  };
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const url = get(r, "url", LIM.url), user = get(r, "user", LIM.user), pass = get(r, "pass", LIM.pass, false);
+    if (!pass && !user && !url) continue;
+    const name = get(r, "name", LIM.name) || hostOf(url) || user || "Untitled";
+    out.push({ id: rid(), name, url, user, pass, notes: get(r, "notes", LIM.notes), updated: new Date().toISOString() });
+  }
+  return out;
+}
+ 
+/* ================= ZIP reading (stored and deflate entries, no encryption, no ZIP64) ================= */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(u8) {
+  let c = 0xffffffff;
+  for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+ 
+function zipDirectory(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const len = u8.length;
+  let eocd = -1;
+  for (let i = len - 22; i >= Math.max(0, len - 22 - 65535); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("Not a valid ZIP archive.");
+  const total = dv.getUint16(eocd + 10, true);
+  const cdOff = dv.getUint32(eocd + 16, true);
+  if (total === 0xffff || cdOff === 0xffffffff) throw new Error("ZIP64 archives are not supported.");
+  if (total > LIM.zipEntries) throw new Error("The archive has more than " + LIM.zipEntries + " files.");
+  const out = [];
+  let p = cdOff;
+  for (let n = 0; n < total; n++) {
+    if (p + 46 > len || dv.getUint32(p, true) !== 0x02014b50) throw new Error("The ZIP directory is damaged.");
+    const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+    if (p + 46 + nl > len) throw new Error("The ZIP directory is damaged.");
+    out.push({
+      flags: dv.getUint16(p + 8, true), method: dv.getUint16(p + 10, true),
+      crc: dv.getUint32(p + 16, true), csize: dv.getUint32(p + 20, true), usize: dv.getUint32(p + 24, true),
+      off: dv.getUint32(p + 42, true),
+      name: new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl))
+    });
+    p += 46 + nl + el + cl;
+  }
+  return out;
+}
+ 
+async function inflateRaw(data, limit) {
+  if (typeof DecompressionStream === "undefined") throw new Error("This browser cannot decompress ZIP files.");
+  const reader = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+  const parts = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > limit) { reader.cancel().catch(() => {}); throw new Error("File inside the archive is too large when decompressed."); }
+    parts.push(value);
+  }
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const c of parts) { out.set(c, o); o += c.length; }
+  return out;
+}
+ 
+async function zipExtract(u8, e) {
+  if (e.flags & 1) throw new Error("password-protected, which is not supported");
+  if (e.usize > LIM.inflated) throw new Error("larger than 25 MB");
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (e.off + 30 > u8.length || dv.getUint32(e.off, true) !== 0x04034b50) throw new Error("local header is damaged");
+  const start = e.off + 30 + dv.getUint16(e.off + 26, true) + dv.getUint16(e.off + 28, true);
+  const end = start + e.csize;
+  if (end > u8.length) throw new Error("data is truncated");
+  const raw = u8.subarray(start, end);
+  let out;
+  if (e.method === 0) out = raw.slice();
+  else if (e.method === 8) out = await inflateRaw(raw, LIM.inflated);
+  else throw new Error("compression method " + e.method + " is not supported");
+  if (out.length !== e.usize || crc32(out) !== e.crc) throw new Error("integrity check (CRC-32, a checksum) failed");
+  return out;
+}
+ 
+/* ================= import workflow ================= */
+const keyOf = (e) => [e.name, e.url, e.user, e.pass].join("\u0001");
+ 
+async function loadImport(files) {
+  const entries = [], report = [];
+  $("#im-go").disabled = true;
+  $("#im-msg").textContent = "";
+  $("#im-sum").textContent = "Reading files.";
+  for (const f of files) {
+    try {
+      if (f.size > LIM.file) throw new Error("larger than 25 MB");
+      const u8 = new Uint8Array(await f.arrayBuffer());
+      const isZip = u8.length > 3 && u8[0] === 0x50 && u8[1] === 0x4b && (u8[2] === 3 || u8[2] === 5);
+      if (isZip) {
+        const all = zipDirectory(u8);
+        const csvs = all.filter((e) => /\.csv$/i.test(e.name) && !e.name.endsWith("/") && !/(^|\/)(__MACOSX\/|\._)/.test(e.name));
+        if (!csvs.length) throw new Error("no .csv file inside the archive (" + plural(all.length, "file") + " found)");
+        for (const e of csvs) {
+          const label = f.name + " > " + e.name;
+          try {
+            const rows = parseCsv(decodeText(await zipExtract(u8, e)));
+            const list = entriesFromRows(rows);
+            entries.push(...list);
+            report.push([label + ": " + plural(list.length, "entry").replace("entrys", "entries"), false]);
+          } catch (err) { report.push([label + ": " + err.message, true]); }
+        }
+      } else if (/\.(csv|txt)$/i.test(f.name) || f.type === "text/csv") {
+        const list = entriesFromRows(parseCsv(decodeText(u8)));
+        entries.push(...list);
+        report.push([f.name + ": " + plural(list.length, "entry").replace("entrys", "entries"), false]);
+      } else throw new Error("unsupported type; use .csv or .zip");
+    } catch (err) { report.push([f.name + ": " + err.message, true]); }
+  }
+  st.imp = entries;
+  const ul = $("#im-rep");
+  ul.replaceChildren();
+  for (const [text, bad] of report) ul.append(h("li", { class: bad ? "bad" : "" }, text));
+  const have = new Set(st.entries.map(keyOf));
+  const existing = entries.filter((e) => have.has(keyOf(e))).length;
+  $("#im-sum").textContent = entries.length
+    ? plural(entries.length, "entry").replace("entrys", "entries") + " ready to import; " + existing + " already in the vault."
+    : "Nothing to import.";
+  $("#im-go").disabled = !entries.length || !st.key;
+}
+ 
+$("#imp").addEventListener("click", () => {
+  st.imp = [];
+  $("#im-file").value = "";
+  $("#im-rep").replaceChildren();
+  $("#im-sum").textContent = "";
+  $("#im-msg").textContent = "";
+  $("#im-go").disabled = true;
+  $("#im").showModal();
+});
+$("#im-file").addEventListener("change", () => {
+  const files = Array.from($("#im-file").files || []);
+  if (files.length) loadImport(files);
+});
+$("#im-cancel").addEventListener("click", () => $("#im").close());
+$("#im").addEventListener("close", () => { st.imp = []; $("#im-file").value = ""; $("#im-rep").replaceChildren(); });
+$("#im-go").addEventListener("click", async () => {
+  if (!st.key || !st.imp.length) return;
+  const seen = new Set($("#im-skip").checked ? st.entries.map(keyOf) : []);
+  let added = 0, skipped = 0;
+  for (const e of st.imp) {
+    const k = keyOf(e);
+    if (seen.has(k)) { skipped++; continue; }
+    seen.add(k);
+    st.entries.push(e);
+    added++;
+  }
+  st.imp = [];
+  const ok = await seal();
+  $("#im").close();
+  render();
+  say((ok ? "" : "Saved in memory only. Browser storage failed; export a backup now. ") +
+    "Imported " + added + (added === 1 ? " entry" : " entries") + (skipped ? ", skipped " + skipped + " duplicate" + (skipped === 1 ? "" : "s") : "") +
+    ". Delete the source file now.", !ok);
+});
+ 
+/* ================= export, change master password, delete ================= */
 $("#export").addEventListener("click", () => {
   if (!st.blob) { say("Nothing to export yet.", true); return; }
   const url = URL.createObjectURL(new Blob([JSON.stringify(st.blob, null, 2)], { type: "application/json" }));
@@ -526,7 +799,7 @@ $("#export").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   say("Encrypted backup downloaded. It is only readable with your master password.");
 });
-
+ 
 $("#chmp").addEventListener("click", () => {
   ["#cm-old", "#cm-new", "#cm-new2"].forEach((s) => ($(s).value = ""));
   $("#cm-msg").textContent = "";
@@ -558,7 +831,7 @@ $("#cm-form").addEventListener("submit", async (ev) => {
     btn.disabled = false;
   }
 });
-
+ 
 $("#lockbtn").addEventListener("click", () => lock());
 $("#wipe").addEventListener("click", () => {
   if (!confirm("Permanently delete the vault from this browser? Export a backup first if you may need it.")) return;
@@ -566,8 +839,8 @@ $("#wipe").addEventListener("click", () => {
   st.blob = null;
   lock("Vault deleted from this browser.");
 });
-
-/* ---------- start ---------- */
+ 
+/* ================= start ================= */
 if (!window.crypto || !crypto.subtle) {
   $("#lock").hidden = true;
   say("This browser does not expose the Web Crypto API (Application Programming Interface) here. Open the file in a current browser.", true);
@@ -577,3 +850,4 @@ if (!window.crypto || !crypto.subtle) {
 </script>
 </body>
 </html>
+ 
